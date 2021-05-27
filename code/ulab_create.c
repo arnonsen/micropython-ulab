@@ -34,8 +34,7 @@ static mp_obj_t create_zeros_ones_full(mp_obj_t oshape, uint8_t dtype, mp_obj_t 
         if(len > ULAB_MAX_DIMS) {
             mp_raise_TypeError(translate("too many dimensions"));
         }
-        size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-        memset(shape, 0, ULAB_MAX_DIMS * sizeof(size_t));
+		size_t shape[ULAB_MAX_DIMS] = { 0 };
         size_t i = 0;
         mp_obj_iter_buf_t iter_buf;
         mp_obj_t item, iterable = mp_getiter(oshape, &iter_buf);
@@ -64,31 +63,21 @@ static mp_obj_t create_zeros_ones_full(mp_obj_t oshape, uint8_t dtype, mp_obj_t 
 #endif
 
 #if ULAB_NUMPY_HAS_ARANGE | ULAB_NUMPY_HAS_LINSPACE
+
+#define ARANGE_LOOP(type_) { type_ *array = (type_ *)ndarray->array; for (size_t i = 0; i < len; i++, value += step) *array++ = (type_)value;}
+
 static ndarray_obj_t *create_linspace_arange(mp_float_t start, mp_float_t step, size_t len, uint8_t dtype) {
     mp_float_t value = start;
 
     ndarray_obj_t *ndarray = ndarray_new_linear_array(len, dtype);
-    if(ndarray->boolean == NDARRAY_BOOLEAN) {
-        uint8_t *array = (uint8_t *)ndarray->array;
-        for(size_t i=0; i < len; i++, value += step) {
-            *array++ = value == MICROPY_FLOAT_CONST(0.0) ? 0 : 1;
-        }
-    } else if(dtype == NDARRAY_UINT8) {
-        uint8_t *array = (uint8_t *)ndarray->array;
-        for(size_t i=0; i < len; i++, value += step) *array++ = (uint8_t)value;
-    } else if(dtype == NDARRAY_INT8) {
-        int8_t *array = (int8_t *)ndarray->array;
-        for(size_t i=0; i < len; i++, value += step) *array++ = (int8_t)value;
-    } else if(dtype == NDARRAY_UINT16) {
-        uint16_t *array = (uint16_t *)ndarray->array;
-        for(size_t i=0; i < len; i++, value += step) *array++ = (uint16_t)value;
-    } else if(dtype == NDARRAY_INT16) {
-        int16_t *array = (int16_t *)ndarray->array;
-        for(size_t i=0; i < len; i++, value += step) *array++ = (int16_t)value;
-    } else {
-        mp_float_t *array = (mp_float_t *)ndarray->array;
-        for(size_t i=0; i < len; i++, value += step) *array++ = value;
-    }
+	if (dtype == NDARRAY_UINT8)			ARANGE_LOOP(uint8_t)
+	else if (dtype == NDARRAY_INT8)		ARANGE_LOOP(int8_t)
+	else if (dtype == NDARRAY_UINT16)	ARANGE_LOOP(uint16_t)
+	else if (dtype == NDARRAY_INT16)	ARANGE_LOOP(int16_t)
+	else if (dtype == NDARRAY_UINT32)	ARANGE_LOOP(uint32_t)
+	else if (dtype == NDARRAY_INT32)	ARANGE_LOOP(int32_t)
+	else if (dtype == NDARRAY_INT64)	ARANGE_LOOP(int64_t)
+	else								ARANGE_LOOP(mp_float_t)
     return ndarray;
 }
 #endif
@@ -186,8 +175,8 @@ mp_obj_t create_concatenate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *k
         mp_raise_TypeError(translate("first argument must be a tuple of ndarrays"));
     }
     int8_t axis = (int8_t)args[1].u_int;
-    size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-    memset(shape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
+
+	size_t shape[ULAB_MAX_DIMS] = { 0 };
     mp_obj_tuple_t *ndarrays = MP_OBJ_TO_PTR(args[0].u_obj);
 
     // first check, whether the arrays are compatible

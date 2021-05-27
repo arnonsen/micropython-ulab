@@ -12,6 +12,7 @@
 #define _TOOLS_
 
 #include "ndarray.h"
+#include "numpy/numpy_tools.h"
 
 #define SWAP(t, a, b) { t tmp = a; a = b; b = tmp; }
 

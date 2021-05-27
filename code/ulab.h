@@ -232,7 +232,7 @@
 // pointer in iterations. Setting ULAB_VECTORISE_USES_FUNCPOINTER to 1 saves
 // around 800 bytes in the four-dimensional case, and around 200 in two dimensions.
 #ifndef ULAB_VECTORISE_USES_FUN_POINTER
-#define ULAB_VECTORISE_USES_FUN_POINTER (1)
+#define ULAB_VECTORISE_USES_FUN_POINTER (0)
 #endif
 
 // determines, whether e is defined in ulab.numpy itself
@@ -562,7 +562,7 @@
 #endif
 
 #ifndef ULAB_SCIPY_HAS_LINALG_MODULE
-#define ULAB_SCIPY_HAS_LINALG_MODULE        (1)
+#define ULAB_SCIPY_HAS_LINALG_MODULE        (0)
 #endif
 
 #ifndef ULAB_SCIPY_LINALG_HAS_CHO_SOLVE

@@ -26,14 +26,15 @@ static mp_obj_t compare_function(mp_obj_t x1, mp_obj_t x2, uint8_t op) {
     ndarray_obj_t *lhs = ndarray_from_mp_obj(x1);
     ndarray_obj_t *rhs = ndarray_from_mp_obj(x2);
     uint8_t ndim = 0;
-    size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-    int32_t *lstrides = m_new(int32_t, ULAB_MAX_DIMS);
-    int32_t *rstrides = m_new(int32_t, ULAB_MAX_DIMS);
-    if(!ndarray_can_broadcast(lhs, rhs, &ndim, shape, lstrides, rstrides)) {
+
+
+	size_t shape[ULAB_MAX_DIMS] = {0};
+	int32_t lstrides[ULAB_MAX_DIMS] = {0};
+	int32_t rstrides[ULAB_MAX_DIMS] = {0};
+
+	if(!ndarray_can_broadcast(lhs, rhs, &ndim, shape, lstrides, rstrides)) {
         mp_raise_ValueError(translate("operands could not be broadcast together"));
-        m_del(size_t, shape, ULAB_MAX_DIMS);
-        m_del(int32_t, lstrides, ULAB_MAX_DIMS);
-        m_del(int32_t, rstrides, ULAB_MAX_DIMS);
+
     }
 
     uint8_t *larray = (uint8_t *)lhs->array;
@@ -47,6 +48,7 @@ static mp_obj_t compare_function(mp_obj_t x1, mp_obj_t x2, uint8_t op) {
     // These are the upcasting rules
     // float always becomes float
     // operation on identical types preserves type
+    // uint8 + uint8 => uint8
     // uint8 + int8 => int16
     // uint8 + int16 => int16
     // uint8 + uint16 => uint16

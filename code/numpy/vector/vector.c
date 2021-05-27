@@ -251,14 +251,13 @@ mp_obj_t vectorise_arctan2(mp_obj_t y, mp_obj_t x) {
     ndarray_obj_t *ndarray_y = ndarray_from_mp_obj(y);
 
     uint8_t ndim = 0;
-    size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-    int32_t *xstrides = m_new(int32_t, ULAB_MAX_DIMS);
-    int32_t *ystrides = m_new(int32_t, ULAB_MAX_DIMS);
+
+	size_t shape[ULAB_MAX_DIMS] = { 0 };
+	int32_t xstrides[ULAB_MAX_DIMS] = { 0 };
+	int32_t ystrides[ULAB_MAX_DIMS] = { 0 };
     if(!ndarray_can_broadcast(ndarray_x, ndarray_y, &ndim, shape, xstrides, ystrides)) {
         mp_raise_ValueError(translate("operands could not be broadcast together"));
-        m_del(size_t, shape, ULAB_MAX_DIMS);
-        m_del(int32_t, xstrides, ULAB_MAX_DIMS);
-        m_del(int32_t, ystrides, ULAB_MAX_DIMS);
+
     }
 
     uint8_t *xarray = (uint8_t *)ndarray_x->array;

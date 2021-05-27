@@ -445,10 +445,10 @@ static mp_obj_t numerical_argmin_argmax_ndarray(ndarray_obj_t *ndarray, mp_obj_t
         }
 
         uint8_t *array = (uint8_t *)ndarray->array;
-        size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-        memset(shape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
-        int32_t *strides = m_new(int32_t, ULAB_MAX_DIMS);
-        memset(strides, 0, sizeof(uint32_t)*ULAB_MAX_DIMS);
+
+		size_t shape[ULAB_MAX_DIMS] = { 0 };
+		int32_t strides[ULAB_MAX_DIMS] = { 0 };
+
         numerical_reduce_axes(ndarray, ax, shape, strides);
         uint8_t index = ULAB_MAX_DIMS - ndarray->ndim + ax;
 
@@ -565,10 +565,10 @@ static mp_obj_t numerical_sort_helper(mp_obj_t oin, mp_obj_t axis, uint8_t inpla
         }
     }
 
-    size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-    memset(shape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
-    int32_t *strides = m_new(int32_t, ULAB_MAX_DIMS);
-    memset(strides, 0, sizeof(uint32_t)*ULAB_MAX_DIMS);
+
+	size_t shape[ULAB_MAX_DIMS] = { 0 };
+	int32_t strides[ULAB_MAX_DIMS] = { 0 };
+
     numerical_reduce_axes(ndarray, ax, shape, strides);
     ax = ULAB_MAX_DIMS - ndarray->ndim + ax;
     // we work with the typed array, so re-scale the stride
@@ -662,16 +662,16 @@ mp_obj_t numerical_argsort(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw
     if((ax < 0) || (ax > ndarray->ndim - 1)) {
         mp_raise_ValueError(translate("index out of range"));
     }
-    size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-    memset(shape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
-    int32_t *strides = m_new(int32_t, ULAB_MAX_DIMS);
-    memset(strides, 0, sizeof(uint32_t)*ULAB_MAX_DIMS);
+
+	size_t shape[ULAB_MAX_DIMS] = { 0 };
+	int32_t strides[ULAB_MAX_DIMS] = { 0 };
+
     numerical_reduce_axes(ndarray, ax, shape, strides);
 
     // We could return an NDARRAY_UINT8 array, if all lengths are shorter than 256
     ndarray_obj_t *indices = ndarray_new_ndarray(ndarray->ndim, ndarray->shape, NULL, NDARRAY_UINT16);
-    int32_t *istrides = m_new(int32_t, ULAB_MAX_DIMS);
-    memset(istrides, 0, sizeof(uint32_t)*ULAB_MAX_DIMS);
+	int32_t istrides[ULAB_MAX_DIMS] = { 0 };
+
     numerical_reduce_axes(indices, ax, shape, istrides);
     for(uint8_t i=0; i < ULAB_MAX_DIMS; i++) {
         istrides[i] /= sizeof(uint16_t);
@@ -859,8 +859,8 @@ mp_obj_t numerical_diff(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
         stencil[i] = -stencil[i-1]*(N-i+1)/i;
     }
 
-    size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-    memset(shape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
+	size_t shape[ULAB_MAX_DIMS] = { 0 };
+
     for(uint8_t i=0; i < ULAB_MAX_DIMS; i++) {
         shape[i] = ndarray->shape[i];
         if(i == index) {
@@ -872,8 +872,8 @@ mp_obj_t numerical_diff(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
     uint8_t *rarray = (uint8_t *)results->array;
 
     memset(shape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
-    int32_t *strides = m_new(int32_t, ULAB_MAX_DIMS);
-    memset(strides, 0, sizeof(int32_t)*ULAB_MAX_DIMS);
+	int32_t strides[ULAB_MAX_DIMS] = { 0 };
+
     numerical_reduce_axes(ndarray, ax, shape, strides);
 
     if(ndarray->dtype == NDARRAY_UINT8) {
@@ -1012,10 +1012,9 @@ mp_obj_t numerical_median(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_
         if(ax < 0) ax += ndarray->ndim;
         // here we can save the exception, because if the axis is out of range,
         // then numerical_sort_helper has already taken care of the issue
-        size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-        memset(shape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
-        int32_t *strides = m_new(int32_t, ULAB_MAX_DIMS);
-        memset(strides, 0, sizeof(uint32_t)*ULAB_MAX_DIMS);
+		size_t shape[ULAB_MAX_DIMS] = { 0 };
+		int32_t strides[ULAB_MAX_DIMS] = { 0 };
+
         numerical_reduce_axes(ndarray, ax, shape, strides);
         ax = ULAB_MAX_DIMS - ndarray->ndim + ax;
         ndarray_obj_t *results = ndarray_new_dense_ndarray(ndarray->ndim-1, shape, NDARRAY_FLOAT);
@@ -1169,16 +1168,13 @@ mp_obj_t numerical_roll(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
         if((ax < 0) || (ax > ndarray->ndim - 1)) {
             mp_raise_ValueError(translate("index out of range"));
         }
-        size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
-        memset(shape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
-        int32_t *strides = m_new(int32_t, ULAB_MAX_DIMS);
-        memset(strides, 0, sizeof(int32_t)*ULAB_MAX_DIMS);
+		size_t shape[ULAB_MAX_DIMS] = { 0 };
+		int32_t strides[ULAB_MAX_DIMS] = { 0 };
         numerical_reduce_axes(ndarray, ax, shape, strides);
 
-        size_t *rshape = m_new(size_t, ULAB_MAX_DIMS);
-        memset(rshape, 0, sizeof(size_t)*ULAB_MAX_DIMS);
-        int32_t *rstrides = m_new(int32_t, ULAB_MAX_DIMS);
-        memset(rstrides, 0, sizeof(int32_t)*ULAB_MAX_DIMS);
+		size_t rshape[ULAB_MAX_DIMS] = { 0 };
+		int32_t rstrides[ULAB_MAX_DIMS] = { 0 };
+
         numerical_reduce_axes(results, ax, rshape, rstrides);
 
         ax = ULAB_MAX_DIMS - ndarray->ndim + ax;

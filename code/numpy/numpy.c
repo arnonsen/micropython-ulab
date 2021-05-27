@@ -105,7 +105,10 @@ static const mp_rom_map_elem_t ulab_numpy_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_int8), MP_ROM_INT(NDARRAY_INT8) },
     { MP_ROM_QSTR(MP_QSTR_uint16), MP_ROM_INT(NDARRAY_UINT16) },
     { MP_ROM_QSTR(MP_QSTR_int16), MP_ROM_INT(NDARRAY_INT16) },
-    { MP_ROM_QSTR(MP_QSTR_float), MP_ROM_INT(NDARRAY_FLOAT) },
+	{ MP_ROM_QSTR(MP_QSTR_uint32), MP_ROM_INT(NDARRAY_UINT32) },
+	{ MP_ROM_QSTR(MP_QSTR_int32), MP_ROM_INT(NDARRAY_INT32) },
+	{ MP_ROM_QSTR(MP_QSTR_int64), MP_ROM_INT(NDARRAY_INT64) },
+	{ MP_ROM_QSTR(MP_QSTR_float), MP_ROM_INT(NDARRAY_FLOAT) },
     // modules of numpy
     #if ULAB_NUMPY_HAS_FFT_MODULE
         { MP_ROM_QSTR(MP_QSTR_fft), MP_ROM_PTR(&ulab_fft_module) },
@@ -322,7 +325,9 @@ static const mp_rom_map_elem_t ulab_numpy_globals_table[] = {
     #if ULAB_NUMPY_HAS_VECTORIZE
     { MP_OBJ_NEW_QSTR(MP_QSTR_vectorize), (mp_obj_t)&vectorise_vectorize_obj },
     #endif
-
+	#if NDARRAY_HAS_COPY	// todo: verify if required
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_copy), (mp_obj_t)&ndarray_copy_obj },
+	#endif
 };
 
 static MP_DEFINE_CONST_DICT(mp_module_ulab_numpy_globals, ulab_numpy_globals_table);

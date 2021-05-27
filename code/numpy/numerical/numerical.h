@@ -18,7 +18,7 @@
 // TODO: implement cumsum
 
 #define RUN_ARGMIN1(ndarray, type, array, results, rarray, index, op)\
-({\
+{\
     uint16_t best_index = 0;\
     type best_value = *((type *)(array));\
     if(((op) == NUMERICAL_MAX) || ((op) == NUMERICAL_ARGMAX)) {\
@@ -44,10 +44,10 @@
         memcpy((rarray), &best_value, (results)->itemsize);\
     }\
     (rarray) += (results)->itemsize;\
-})
+}
 
 #define RUN_SUM1(type, array, results, rarray, ss)\
-({\
+{\
     type sum = 0;\
     for(size_t i=0; i < (ss).shape[0]; i++) {\
         sum += *((type *)(array));\
@@ -55,12 +55,12 @@
     }\
     memcpy((rarray), &sum, (results)->itemsize);\
     (rarray) += (results)->itemsize;\
-})
+}
 
 // The mean could be calculated by simply dividing the sum by
 // the number of elements, but that method is numerically unstable
 #define RUN_MEAN1(type, array, rarray, ss)\
-({\
+{\
     mp_float_t M = 0.0;\
     for(size_t i=0; i < (ss).shape[0]; i++) {\
         mp_float_t value = (mp_float_t)(*(type *)(array));\
@@ -68,13 +68,13 @@
         (array) += (ss).strides[0];\
     }\
     *(rarray)++ = M;\
-})
+}
 
 // Instead of the straightforward implementation of the definition,
 // we take the numerically stable Welford algorithm here
 // https://www.johndcook.com/blog/2008/09/26/comparing-three-methods-of-computing-standard-deviation/
 #define RUN_STD1(type, array, rarray, ss, div)\
-({\
+{\
     mp_float_t M = 0.0, m = 0.0, S = 0.0;\
     for(size_t i=0; i < (ss).shape[0]; i++) {\
         mp_float_t value = (mp_float_t)(*(type *)(array));\
@@ -84,10 +84,10 @@
         (array) += (ss).strides[0];\
     }\
     *(rarray)++ = MICROPY_FLOAT_C_FUN(sqrt)(S / (div));\
-})
+}
 
 #define RUN_MEAN_STD1(type, array, rarray, ss, div, isStd)\
-({\
+{\
     mp_float_t M = 0.0, m = 0.0, S = 0.0;\
     for(size_t i=0; i < (ss).shape[0]; i++) {\
         mp_float_t value = (mp_float_t)(*(type *)(array));\
@@ -99,10 +99,10 @@
         (array) += (ss).strides[0];\
     }\
     *(rarray)++ = isStd ? MICROPY_FLOAT_C_FUN(sqrt)(S / (div)) : M;\
-})
+}
 
 #define RUN_DIFF1(ndarray, type, array, results, rarray, index, stencil, N)\
-({\
+{\
     for(size_t i=0; i < (results)->shape[ULAB_MAX_DIMS - 1]; i++) {\
         type sum = 0;\
         uint8_t *source = (array);\
@@ -114,10 +114,10 @@
         *(type *)(rarray) = sum;\
         (rarray) += (results)->itemsize;\
     }\
-})
+}
 
 #define HEAPSORT1(type, array, increment, N)\
-({\
+{\
     type *_array = (type *)array;\
     type tmp;\
     size_t c, q = (N), p, r = (N) >> 1;\
@@ -148,10 +148,10 @@
         }\
         _array[p*(increment)] = tmp;\
     }\
-})
+}
 
 #define HEAP_ARGSORT1(type, array, increment, N, iarray, iincrement)\
-({\
+{\
     type *_array = (type *)array;\
     type tmp;\
     uint16_t itmp, c, q = (N), p, r = (N) >> 1;\
@@ -185,7 +185,7 @@
         }\
         (iarray)[p*(iincrement)] = itmp;\
     }\
-})
+}
 
 #if ULAB_MAX_DIMS == 1
 #define RUN_SUM(type, array, results, rarray, ss) do {\

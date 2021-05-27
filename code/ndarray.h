@@ -67,6 +67,9 @@ enum NDARRAY_TYPE {
     NDARRAY_INT8 = 'b',
     NDARRAY_UINT16 = 'H',
     NDARRAY_INT16 = 'h',
+    NDARRAY_UINT32 = 'I',
+    NDARRAY_INT32 = 'i',
+    NDARRAY_INT64 = 'q',
     NDARRAY_FLOAT = FLOAT_TYPECODE,
 };
 
@@ -140,7 +143,7 @@ mp_obj_t ndarray_make_new(const mp_obj_type_t *, size_t , size_t , const mp_obj_
 mp_obj_t ndarray_subscr(mp_obj_t , mp_obj_t , mp_obj_t );
 mp_obj_t ndarray_getiter(mp_obj_t , mp_obj_iter_buf_t *);
 bool ndarray_can_broadcast(ndarray_obj_t *, ndarray_obj_t *, uint8_t *, size_t *, int32_t *, int32_t *);
-bool ndarray_can_broadcast_inplace(ndarray_obj_t *, ndarray_obj_t *, int32_t *);
+bool ndarray_can_broadcast_inplace(ndarray_obj_t *, ndarray_obj_t *, uint8_t *, size_t *, int32_t *, int32_t *);
 mp_obj_t ndarray_binary_op(mp_binary_op_t , mp_obj_t , mp_obj_t );
 mp_obj_t ndarray_unary_op(mp_unary_op_t , mp_obj_t );
 
@@ -192,6 +195,7 @@ MP_DECLARE_CONST_FUN_OBJ_1(ndarray_info_obj);
 mp_int_t ndarray_get_buffer(mp_obj_t , mp_buffer_info_t *, mp_uint_t );
 //void ndarray_attributes(mp_obj_t , qstr , mp_obj_t *);
 
+ndarray_obj_t *match_type_to_array(mp_obj_t, int);
 ndarray_obj_t *ndarray_from_mp_obj(mp_obj_t );
 
 

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\scipy/optimize/optimize.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\scipy/signal/signal.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\scipy/special/special.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ndarray_operators.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ulab_tools.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy\numpy_tools.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ndarray.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/approx/approx.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/compare/compare.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ulab_create.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/fft/fft.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/fft/fft_tools.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/filter/filter.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/linalg/linalg.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/linalg/linalg_tools.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/numerical/numerical.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/poly/poly.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/stats/stats.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/transform/transform.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/vector/vector.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\user/user.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/numpy.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\scipy/scipy.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ulab.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\utils\utils.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <PyUsrModInclude Include="$(PyBaseDir)usrmod\*.h" />
+	<PyUsrModInclude Include="$(PyBaseDir)usrmod\ulab\code\*.h" />
+  </ItemGroup>
+</Project>
