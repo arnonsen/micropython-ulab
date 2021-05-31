@@ -20,8 +20,9 @@
 #include "ulab.h"
 #include "ulab_create.h"
 
-#if ULAB_NUMPY_HAS_ONES | ULAB_NUMPY_HAS_ZEROS | ULAB_NUMPY_HAS_FULL
-static mp_obj_t create_zeros_ones_full(mp_obj_t oshape, uint8_t dtype, mp_obj_t value) {
+#if ULAB_NUMPY_HAS_ONES || ULAB_NUMPY_HAS_ZEROS || ULAB_NUMPY_HAS_FULL || ULAB_NUMPY_HAS_EMPTY
+
+mp_obj_t create_zeros_ones_full(mp_obj_t oshape, uint8_t dtype, mp_obj_t value) {
     if(!mp_obj_is_int(oshape) && !mp_obj_is_type(oshape, &mp_type_tuple) && !mp_obj_is_type(oshape, &mp_type_list)) {
         mp_raise_TypeError(translate("input argument must be an integer, a tuple, or a list"));
     }
@@ -60,6 +61,20 @@ static mp_obj_t create_zeros_ones_full(mp_obj_t oshape, uint8_t dtype, mp_obj_t 
     // if zeros calls the function, we don't have to do anything
     return MP_OBJ_FROM_PTR(ndarray);
 }
+
+mp_obj_t create_zeros_ones_empty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args, mp_obj_t val) {
+	static const mp_arg_t allowed_args[] = {
+		{ MP_QSTR_, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL } },
+		{ MP_QSTR_dtype, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = NDARRAY_FLOAT } },
+	};
+
+	mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+	mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+
+	uint8_t dtype = args[1].u_int;
+	return create_zeros_ones_full(args[0].u_obj, dtype, val);
+}
+
 #endif
 
 #if ULAB_NUMPY_HAS_ARANGE | ULAB_NUMPY_HAS_LINSPACE
@@ -605,20 +620,29 @@ MP_DEFINE_CONST_FUN_OBJ_KW(create_logspace_obj, 2, create_logspace);
 //|
 
 mp_obj_t create_ones(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_, MP_ARG_REQUIRED | MP_ARG_OBJ, { .u_obj = MP_OBJ_NULL } },
-        { MP_QSTR_dtype, MP_ARG_KW_ONLY | MP_ARG_INT, { .u_int = NDARRAY_FLOAT } },
-    };
-
-    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
-    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
-
-    uint8_t dtype = args[1].u_int;
-    mp_obj_t one = mp_obj_new_int(1);
-    return create_zeros_ones_full(args[0].u_obj, dtype, one);
+	return create_zeros_ones_empty(n_args, pos_args, kw_args, mp_obj_new_int(1));
 }
 
 MP_DEFINE_CONST_FUN_OBJ_KW(create_ones_obj, 0, create_ones);
+#endif
+
+#if ULAB_NUMPY_HAS_EMPTY
+//| def empty(shape: Union[int, Tuple[int, ...]], *, dtype: _DType = ulab.float) -> ulab.ndarray:
+//|    """
+//|    .. param: shape
+//|       Shape of the array, either an integer (for a 1-D array) or a tuple of 2 integers (for a 2-D array)
+//|    .. param: dtype
+//|       Type of values in the array
+//|
+//|    Return a new array of the given shape with all elements set to 0."""
+//|    ...
+//|
+
+mp_obj_t create_empty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+	return create_zeros_ones_empty(n_args, pos_args, kw_args, mp_const_none);
+}
+
+MP_DEFINE_CONST_FUN_OBJ_KW(create_empty_obj, 0, create_empty);
 #endif
 
 #if ULAB_NUMPY_HAS_ZEROS
@@ -634,16 +658,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(create_ones_obj, 0, create_ones);
 //|
 
 mp_obj_t create_zeros(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_, MP_ARG_REQUIRED | MP_ARG_OBJ, { .u_obj = MP_OBJ_NULL } },
-        { MP_QSTR_dtype, MP_ARG_KW_ONLY | MP_ARG_INT, { .u_int = NDARRAY_FLOAT } },
-    };
-
-    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
-    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
-
-    uint8_t dtype = args[1].u_int;
-    return create_zeros_ones_full(args[0].u_obj, dtype, mp_const_none);
+	return create_zeros_ones_empty(n_args, pos_args, kw_args, mp_const_none);
 }
 
 MP_DEFINE_CONST_FUN_OBJ_KW(create_zeros_obj, 0, create_zeros);

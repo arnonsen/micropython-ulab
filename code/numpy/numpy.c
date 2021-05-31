@@ -154,10 +154,13 @@ static const mp_rom_map_elem_t ulab_numpy_globals_table[] = {
     #if ULAB_NUMPY_HAS_LOGSPACE
         { MP_ROM_QSTR(MP_QSTR_logspace), (mp_obj_t)&create_logspace_obj },
     #endif
-    #if ULAB_NUMPY_HAS_ONES
-        { MP_ROM_QSTR(MP_QSTR_ones), (mp_obj_t)&create_ones_obj },
+    #if ULAB_NUMPY_HAS_EMPTY
+        { MP_ROM_QSTR(MP_QSTR_empty), (mp_obj_t)&create_empty_obj },
     #endif
-    #if ULAB_NUMPY_HAS_ZEROS
+	#if ULAB_NUMPY_HAS_ONES
+		{ MP_ROM_QSTR(MP_QSTR_ones), (mp_obj_t)&create_ones_obj },
+	#endif
+	#if ULAB_NUMPY_HAS_ZEROS
         { MP_ROM_QSTR(MP_QSTR_zeros), (mp_obj_t)&create_zeros_obj },
     #endif
     // functions of the compare sub-module

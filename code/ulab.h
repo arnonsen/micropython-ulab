@@ -309,6 +309,10 @@
 #define ULAB_NUMPY_HAS_ONES             (1)
 #endif
 
+#ifndef ULAB_NUMPY_HAS_EMPTY
+#define ULAB_NUMPY_HAS_EMPTY            (1)
+#endif
+
 #ifndef ULAB_NUMPY_HAS_ZEROS
 #define ULAB_NUMPY_HAS_ZEROS            (1)
 #endif
