@@ -576,7 +576,13 @@ mp_obj_t create_logspace(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
     } else if(ndarray->dtype == NDARRAY_INT16) {
         int16_t *array = (int16_t *)ndarray->array;
         for(size_t i=0; i < len; i++, value *= quotient) *array++ = (int16_t)value;
-    } else {
+	} else if (ndarray->dtype == NDARRAY_UINT32) {
+		uint32_t *array = (uint32_t *)ndarray->array;
+		for (size_t i = 0; i < len; i++, value *= quotient) *array++ = (uint32_t)value;
+	} else if (ndarray->dtype == NDARRAY_INT32) {
+		int32_t *array = (int32_t *)ndarray->array;
+		for (size_t i = 0; i < len; i++, value *= quotient) *array++ = (int32_t)value;
+	} else {
         mp_float_t *array = (mp_float_t *)ndarray->array;
         for(size_t i=0; i < len; i++, value *= quotient) *array++ = value;
     }

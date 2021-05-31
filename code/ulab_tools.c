@@ -39,6 +39,20 @@ mp_float_t ndarray_get_float_int16(void *data) {
     return (mp_float_t)(*(int16_t *)data);
 }
 
+mp_float_t ndarray_get_float_uint32(void *data) {
+	// Returns a float value from an uint32_t type
+	return (mp_float_t)(*(uint32_t *)data);
+}
+
+mp_float_t ndarray_get_float_int32(void *data) {
+	// Returns a float value from an int32_t type
+	return (mp_float_t)(*(int32_t *)data);
+}
+
+mp_float_t ndarray_get_float_int64(void *data) {
+	// Returns a float value from an int64_t type
+	return (mp_float_t)(*(int64_t *)data);
+}
 
 mp_float_t ndarray_get_float_float(void *data) {
     // Returns a float value from an mp_float_t type
@@ -55,7 +69,13 @@ void *ndarray_get_float_function(uint8_t dtype) {
         return ndarray_get_float_uint16;
     } else if(dtype == NDARRAY_INT16) {
         return ndarray_get_float_int16;
-    } else {
+	} else if (dtype == NDARRAY_UINT32) {
+		return ndarray_get_float_uint32;
+	} else if (dtype == NDARRAY_INT32) {
+		return ndarray_get_float_int32;
+	} else if (dtype == NDARRAY_INT64) {
+		return ndarray_get_float_int64;
+	} else {
         return ndarray_get_float_float;
     }
 }
@@ -70,7 +90,13 @@ mp_float_t ndarray_get_float_index(void *data, uint8_t dtype, size_t index) {
         return (mp_float_t)((uint16_t *)data)[index];
     } else if(dtype == NDARRAY_INT16) {
         return (mp_float_t)((int16_t *)data)[index];
-    } else {
+	} else if (dtype == NDARRAY_UINT32) {
+		return (mp_float_t)((uint32_t *)data)[index];
+	} else if (dtype == NDARRAY_INT32) {
+		return (mp_float_t)((int32_t *)data)[index];
+	} else if (dtype == NDARRAY_INT64) {
+		return (mp_float_t)((int64_t *)data)[index];
+	} else {
         return (mp_float_t)((mp_float_t *)data)[index];
     }
 }
@@ -86,7 +112,13 @@ mp_float_t ndarray_get_float_value(void *data, uint8_t dtype) {
         return (mp_float_t)(*(uint16_t *)data);
     } else if(dtype == NDARRAY_INT16) {
         return (mp_float_t)(*(int16_t *)data);
-    } else {
+	} else if (dtype == NDARRAY_UINT32) {
+		return (mp_float_t)(*(uint32_t *)data);
+	} else if (dtype == NDARRAY_INT32) {
+		return (mp_float_t)(*(int32_t *)data);
+	} else if (dtype == NDARRAY_INT64) {
+		return (mp_float_t)(*(int64_t *)data);
+	} else {
         return *((mp_float_t *)data);
     }
 }
