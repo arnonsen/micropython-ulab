@@ -22,6 +22,7 @@
 #include "../../ulab_tools.h"
 #include "compare.h"
 
+#if !NUMPY_OPERATORS_USE_TEMPORARY_BUFFER
 static mp_obj_t compare_function(mp_obj_t x1, mp_obj_t x2, uint8_t op) {
     ndarray_obj_t *lhs = ndarray_from_mp_obj(x1);
     ndarray_obj_t *rhs = ndarray_from_mp_obj(x2);
@@ -120,10 +121,13 @@ static mp_obj_t compare_function(mp_obj_t x1, mp_obj_t x2, uint8_t op) {
     }
     return mp_const_none; // we should never reach this point
 }
+#else
+#define compare_function(x1,x2,op) ndarray_binary_op(op,x1,x2)
+#endif
 
-static mp_obj_t compare_equal_helper(mp_obj_t x1, mp_obj_t x2, uint8_t comptype) {
+/* static mp_obj_t compare_equal_helper(mp_obj_t x1, mp_obj_t x2, uint8_t comptype) {
     // scalar comparisons should return a single object of mp_obj_t type
-    mp_obj_t result = compare_function(x1, x2, comptype);
+	mp_obj_t result = compare_function(x1, x2, comptype); //todo: fix it
     if((mp_obj_is_int(x1) || mp_obj_is_float(x1)) && (mp_obj_is_int(x2) || mp_obj_is_float(x2))) {
         mp_obj_iter_buf_t iter_buf;
         mp_obj_t iterable = mp_getiter(result, &iter_buf);
@@ -131,29 +135,48 @@ static mp_obj_t compare_equal_helper(mp_obj_t x1, mp_obj_t x2, uint8_t comptype)
         return item;
     }
     return result;
+} */
+
+
+mp_obj_t compare_scalars(mp_obj_t x1, mp_obj_t x2, uint8_t op)
+{
+	if ((mp_obj_is_int(x1) || mp_obj_is_float(x1)) && (mp_obj_is_int(x2) || mp_obj_is_float(x2))) {
+		if (mp_obj_is_small_int(x1) && mp_obj_is_small_int(x2))		{
+			int v1 = MP_OBJ_SMALL_INT_VALUE(x1);
+			int v2 = MP_OBJ_SMALL_INT_VALUE(x2);
+			switch (op)	{
+			case COMPARE_EQUAL:		return v1 == v2 ? mp_const_true : mp_const_false;
+			case COMPARE_NOT_EQUAL:	return v1 != v2 ? mp_const_true : mp_const_false;
+			case COMPARE_MINIMUM:	return v1 < v2 ? x1 : x2;
+			case COMPARE_MAXIMUM:	return v1 > v2 ? x1 : x2;
+			}
+		} else {
+			mp_float_t v1 = mp_obj_get_float(x1);
+			mp_float_t v2 = mp_obj_get_float(x2);
+			switch (op)	{
+			case COMPARE_EQUAL:		return v1 == v2 ? mp_const_true : mp_const_false;
+			case COMPARE_NOT_EQUAL:	return v1 != v2 ? mp_const_true : mp_const_false;
+			case COMPARE_MINIMUM:	return v1 < v2 ? x1 : x2;
+			case COMPARE_MAXIMUM:	return v1 > v2 ? x1 : x2;
+			}
+		}
+		return mp_const_none;
+	}
+	return 0;	// at least one is not scalar
+}
+
+mp_obj_t compare_main(mp_obj_t x1, mp_obj_t x2, uint8_t op) {
+	mp_obj_t result;
+	result = compare_scalars(x1, x2, op);
+	if (result)
+		return result;
+	return compare_function(x1, x2, op);
 }
 
 #if ULAB_NUMPY_HAS_CLIP
 
 mp_obj_t compare_clip(mp_obj_t x1, mp_obj_t x2, mp_obj_t x3) {
-    // Note: this function could be made faster by implementing a single-loop comparison in
-    // RUN_COMPARE_LOOP. However, that would add around 2 kB of compile size, while we
-    // would not gain a factor of two in speed, since the two comparisons should still be
-    // evaluated. In contrast, calling the function twice adds only 140 bytes to the firmware
-    if(mp_obj_is_int(x1) || mp_obj_is_float(x1)) {
-        mp_float_t v1 = mp_obj_get_float(x1);
-        mp_float_t v2 = mp_obj_get_float(x2);
-        mp_float_t v3 = mp_obj_get_float(x3);
-        if(v1 < v2) {
-            return x2;
-        } else if(v1 > v3) {
-            return x3;
-        } else {
-            return x1;
-        }
-    } else { // assume ndarrays
-        return compare_function(x2, compare_function(x1, x3, COMPARE_MINIMUM), COMPARE_MAXIMUM);
-    }
+	return compare_main(x2, compare_main(x1, x3, COMPARE_MINIMUM), COMPARE_MAXIMUM);
 }
 
 MP_DEFINE_CONST_FUN_OBJ_3(compare_clip_obj, compare_clip);
@@ -162,7 +185,7 @@ MP_DEFINE_CONST_FUN_OBJ_3(compare_clip_obj, compare_clip);
 #if ULAB_NUMPY_HAS_EQUAL
 
 mp_obj_t compare_equal(mp_obj_t x1, mp_obj_t x2) {
-    return compare_equal_helper(x1, x2, COMPARE_EQUAL);
+	return compare_main(x1, x2, COMPARE_EQUAL);
 }
 
 MP_DEFINE_CONST_FUN_OBJ_2(compare_equal_obj, compare_equal);
@@ -171,7 +194,7 @@ MP_DEFINE_CONST_FUN_OBJ_2(compare_equal_obj, compare_equal);
 #if ULAB_NUMPY_HAS_NOTEQUAL
 
 mp_obj_t compare_not_equal(mp_obj_t x1, mp_obj_t x2) {
-    return compare_equal_helper(x1, x2, COMPARE_NOT_EQUAL);
+	return compare_main(x1, x2, COMPARE_NOT_EQUAL);
 }
 
 MP_DEFINE_CONST_FUN_OBJ_2(compare_not_equal_obj, compare_not_equal);
@@ -280,13 +303,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(compare_isinf_obj, compare_isinf);
 
 #if ULAB_NUMPY_HAS_MAXIMUM
 mp_obj_t compare_maximum(mp_obj_t x1, mp_obj_t x2) {
-    // extra round, so that we can return maximum(3, 4) properly
-    mp_obj_t result = compare_function(x1, x2, COMPARE_MAXIMUM);
-    if((mp_obj_is_int(x1) || mp_obj_is_float(x1)) && (mp_obj_is_int(x2) || mp_obj_is_float(x2))) {
-        ndarray_obj_t *ndarray = MP_OBJ_TO_PTR(result);
-        return mp_binary_get_val_array(ndarray->dtype, ndarray->array, 0);
-    }
-    return result;
+	return compare_main(x1, x2, COMPARE_MAXIMUM);
 }
 
 MP_DEFINE_CONST_FUN_OBJ_2(compare_maximum_obj, compare_maximum);
@@ -295,13 +312,7 @@ MP_DEFINE_CONST_FUN_OBJ_2(compare_maximum_obj, compare_maximum);
 #if ULAB_NUMPY_HAS_MINIMUM
 
 mp_obj_t compare_minimum(mp_obj_t x1, mp_obj_t x2) {
-    // extra round, so that we can return minimum(3, 4) properly
-    mp_obj_t result = compare_function(x1, x2, COMPARE_MINIMUM);
-    if((mp_obj_is_int(x1) || mp_obj_is_float(x1)) && (mp_obj_is_int(x2) || mp_obj_is_float(x2))) {
-        ndarray_obj_t *ndarray = MP_OBJ_TO_PTR(result);
-        return mp_binary_get_val_array(ndarray->dtype, ndarray->array, 0);
-    }
-    return result;
+	return compare_main(x1, x2, COMPARE_MINIMUM);
 }
 
 MP_DEFINE_CONST_FUN_OBJ_2(compare_minimum_obj, compare_minimum);

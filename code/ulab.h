@@ -42,6 +42,17 @@
 // Possible values lie between 1, and 4, inclusive
 #define ULAB_MAX_DIMS                       2
 
+// By setting this constant to 1, Numpy operators works as following:
+//
+// INPUT1 --> TEMP_BUFFER1
+//                        \
+//                         OPERATOR --> TEMP_BUFFER1 --> TARGET_BUFFER
+//                        /
+// INPUT2 --> TEMP_BUFFER2
+//
+// This methos adds cycles for the conversion to/from temp_buffer but greatly reduces code size
+#define NUMPY_OPERATORS_USE_TEMPORARY_BUFFER          (1)
+
 // By setting this constant to 1, iteration over array dimensions will be implemented
 // as a function (ndarray_rewind_array), instead of writing out the loops in macros
 // This reduces firmware size at the expense of speed

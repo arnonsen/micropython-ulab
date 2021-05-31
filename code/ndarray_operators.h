@@ -10,6 +10,28 @@
 
 #include "ndarray.h"
 
+enum
+{
+	MP_COMPARE_OP_MINIMUM = MP_BINARY_OP_IS_NOT + 1,	// continue the list after the last one
+	MP_COMPARE_OP_MAXIMUM
+};
+
+
+#if NUMPY_OPERATORS_USE_TEMPORARY_BUFFER
+	#define COMPARE_MINIMUM			MP_COMPARE_OP_MINIMUM
+	#define COMPARE_MAXIMUM			MP_COMPARE_OP_MAXIMUM
+	#define COMPARE_EQUAL			MP_BINARY_OP_EQUAL
+	#define COMPARE_NOT_EQUAL		MP_BINARY_OP_NOT_EQUAL
+#else
+	enum COMPARE_FUNCTION_TYPE {
+		COMPARE_EQUAL = MP_BINARY_OP_EQUAL,
+		COMPARE_NOT_EQUAL = MP_BINARY_OP_NOT_EQUAL,
+		COMPARE_MINIMUM,
+		COMPARE_MAXIMUM,
+		COMPARE_CLIP,
+	};
+#endif
+
 mp_obj_t ndarray_multiple_binary_operators(ndarray_obj_t *, ndarray_obj_t *, uint8_t, size_t *, int32_t *, int32_t *, mp_binary_op_t );
 mp_obj_t ndarray_binary_equality(ndarray_obj_t *, ndarray_obj_t *, uint8_t , size_t *,  int32_t *, int32_t *, mp_binary_op_t );
 mp_obj_t ndarray_binary_add(ndarray_obj_t *, ndarray_obj_t *, uint8_t , size_t *, int32_t *, int32_t *);

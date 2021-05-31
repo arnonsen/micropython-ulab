@@ -16,8 +16,8 @@
 #include "ndarray.h"
 #include "ulab_tools.h"
 
-#define SLOW_CAST_TO_FLOAT_FROM_X(type)	\
-	void slow_cast_to_float_from_ ## type(float *dest, char *src, int *stribe, int *shape)	\
+#define CAST_TO_FLOAT_FROM_X(type)	\
+	void cast_to_float_from_ ## type(float *dest, char *src, int *stribe, int *shape)	\
 	{																	\
 		char *s=0;														\
 		int i=1, j;														\
@@ -30,8 +30,8 @@
 		while(i++ < shape[0]);											\
 	}
 
-#define SLOW_CAST_TO_INT32_FROM_X(type)	\
-	void slow_cast_to_int32_from_ ## type(int *dest, char *src, int *stribe, int *shape)	\
+#define CAST_TO_INT32_FROM_X(type)	\
+	void cast_to_int32_from_ ## type(int *dest, char *src, int *stribe, int *shape)	\
 	{																	\
 		char *s=0;														\
 		int i=1, j;														\
@@ -44,8 +44,8 @@
 		while(i++ < shape[0]);											\
 	}
 
-#define SLOW_CAST_TO_X_FROM_INT32(type)	\
-	void slow_cast_to_ ## type ## _from_int32(char *dest, int *src, int *stribe, int *shape)	\
+#define CAST_TO_X_FROM_INT32(type)	\
+	void cast_to_ ## type ## _from_int32(char *dest, int *src, int *stribe, int *shape)	\
 	{																	\
 		char *d=0;														\
 		int i=1, j;														\
@@ -58,8 +58,8 @@
 		while(i++ < shape[0]);											\
 	}
 
-#define SLOW_CAST_TO_X_FROM_FLOAT(type)	\
-	void slow_cast_to_ ## type ## _from_float(char *dest, float *src, int *stribe, int *shape)	\
+#define CAST_TO_X_FROM_FLOAT(type)	\
+	void cast_to_ ## type ## _from_float(char *dest, float *src, int *stribe, int *shape)	\
 	{																	\
 		char *d=0;														\
 		int i=1, j;														\
@@ -74,98 +74,89 @@
 
 
 
-#define FAST_CAST_TO_FLOAT_FROM_X(type)\
-	void fast_cast_to_float_from_ ## type(float *dest, type *src, int len)	\
-	{																	\
-		len &= ~7;														\
-		while(len-- > 0) *dest++ = (float)*src++;						\
-	}
 
+CAST_TO_FLOAT_FROM_X(uint8_t)
+CAST_TO_FLOAT_FROM_X(int8_t)
+CAST_TO_FLOAT_FROM_X(uint16_t)
+CAST_TO_FLOAT_FROM_X(int16_t)
+CAST_TO_FLOAT_FROM_X(uint32_t)
+CAST_TO_FLOAT_FROM_X(int32_t)
+CAST_TO_FLOAT_FROM_X(int64_t)
+//CAST_TO_FLOAT_FROM_X(float)
 
-FAST_CAST_TO_FLOAT_FROM_X(uint8_t)
+CAST_TO_INT32_FROM_X(uint8_t)
+CAST_TO_INT32_FROM_X(int8_t)
+CAST_TO_INT32_FROM_X(uint16_t)
+CAST_TO_INT32_FROM_X(int16_t)
+//CAST_TO_INT32_FROM_X(uint32_t)
+CAST_TO_INT32_FROM_X(int32_t)
+CAST_TO_INT32_FROM_X(int64_t)
+CAST_TO_INT32_FROM_X(float)
 
-SLOW_CAST_TO_FLOAT_FROM_X(uint8_t)
-SLOW_CAST_TO_FLOAT_FROM_X(int8_t)
-SLOW_CAST_TO_FLOAT_FROM_X(uint16_t)
-SLOW_CAST_TO_FLOAT_FROM_X(int16_t)
-SLOW_CAST_TO_FLOAT_FROM_X(uint32_t)
-SLOW_CAST_TO_FLOAT_FROM_X(int32_t)
-SLOW_CAST_TO_FLOAT_FROM_X(int64_t)
-//SLOW_CAST_TO_FLOAT_FROM_X(float)
+CAST_TO_X_FROM_INT32(uint8_t)
+CAST_TO_X_FROM_INT32(int8_t)
+CAST_TO_X_FROM_INT32(uint16_t)
+CAST_TO_X_FROM_INT32(int16_t)
+//CAST_TO_X_FROM_INT32(uint32_t)
+CAST_TO_X_FROM_INT32(int32_t)
+CAST_TO_X_FROM_INT32(int64_t)
+CAST_TO_X_FROM_INT32(float)
 
-SLOW_CAST_TO_INT32_FROM_X(uint8_t)
-SLOW_CAST_TO_INT32_FROM_X(int8_t)
-SLOW_CAST_TO_INT32_FROM_X(uint16_t)
-SLOW_CAST_TO_INT32_FROM_X(int16_t)
-//SLOW_CAST_TO_INT32_FROM_X(uint32_t)
-SLOW_CAST_TO_INT32_FROM_X(int32_t)
-SLOW_CAST_TO_INT32_FROM_X(int64_t)
-SLOW_CAST_TO_INT32_FROM_X(float)
+CAST_TO_X_FROM_FLOAT(uint8_t)
+CAST_TO_X_FROM_FLOAT(int8_t)
+CAST_TO_X_FROM_FLOAT(uint16_t)
+CAST_TO_X_FROM_FLOAT(int16_t)
+CAST_TO_X_FROM_FLOAT(uint32_t)
+CAST_TO_X_FROM_FLOAT(int32_t)
+CAST_TO_X_FROM_FLOAT(int64_t)
+//CAST_TO_X_FROM_FLOAT(float)
 
-SLOW_CAST_TO_X_FROM_INT32(uint8_t)
-SLOW_CAST_TO_X_FROM_INT32(int8_t)
-SLOW_CAST_TO_X_FROM_INT32(uint16_t)
-SLOW_CAST_TO_X_FROM_INT32(int16_t)
-//SLOW_CAST_TO_X_FROM_INT32(uint32_t)
-SLOW_CAST_TO_X_FROM_INT32(int32_t)
-SLOW_CAST_TO_X_FROM_INT32(int64_t)
-SLOW_CAST_TO_X_FROM_INT32(float)
-
-SLOW_CAST_TO_X_FROM_FLOAT(uint8_t)
-SLOW_CAST_TO_X_FROM_FLOAT(int8_t)
-SLOW_CAST_TO_X_FROM_FLOAT(uint16_t)
-SLOW_CAST_TO_X_FROM_FLOAT(int16_t)
-SLOW_CAST_TO_X_FROM_FLOAT(uint32_t)
-SLOW_CAST_TO_X_FROM_FLOAT(int32_t)
-SLOW_CAST_TO_X_FROM_FLOAT(int64_t)
-//SLOW_CAST_TO_X_FROM_FLOAT(float)
-
-typedef void(*slow_cast_to_float_type_t)(float *, char*, int*, int*);
-typedef void(*slow_cast_to_int32_type_t)(int *, char*, int*, int*);
-typedef void(*slow_cast_to_type_from_int32_t)(void *, int*, int*, int*);
-typedef void(*slow_cast_to_type_from_float)(void *, float*, int*, int*);
+typedef void(*cast_to_float_type_t)(float *, char*, int*, int*);
+typedef void(*cast_to_int32_type_t)(int *, char*, int*, int*);
+typedef void(*cast_to_type_from_int32_t)(void *, int*, int*, int*);
+typedef void(*cast_to_type_from_float_t)(void *, float*, int*, int*);
 
 
 
-const slow_cast_to_float_type_t slow_cast_to_float_func_list[] = {
-							(slow_cast_to_float_type_t)&slow_cast_to_float_from_uint8_t,
-							(slow_cast_to_float_type_t)&slow_cast_to_float_from_int8_t,
-							(slow_cast_to_float_type_t)&slow_cast_to_float_from_uint16_t,
-							(slow_cast_to_float_type_t)&slow_cast_to_float_from_int16_t,
-							(slow_cast_to_float_type_t)&slow_cast_to_float_from_uint32_t,
-							(slow_cast_to_float_type_t)&slow_cast_to_float_from_int32_t,
-							(slow_cast_to_float_type_t)&slow_cast_to_float_from_int64_t,
-							(slow_cast_to_float_type_t)&slow_cast_to_int32_from_int32_t };
+const cast_to_float_type_t cast_to_float_func_list[] = {
+							(cast_to_float_type_t)&cast_to_float_from_uint8_t,
+							(cast_to_float_type_t)&cast_to_float_from_int8_t,
+							(cast_to_float_type_t)&cast_to_float_from_uint16_t,
+							(cast_to_float_type_t)&cast_to_float_from_int16_t,
+							(cast_to_float_type_t)&cast_to_float_from_uint32_t,
+							(cast_to_float_type_t)&cast_to_float_from_int32_t,
+							(cast_to_float_type_t)&cast_to_float_from_int64_t,
+							(cast_to_float_type_t)&cast_to_int32_from_int32_t };
 
-const slow_cast_to_int32_type_t slow_cast_to_int32_func_list[] = {
-							(slow_cast_to_int32_type_t)&slow_cast_to_int32_from_uint8_t,
-							(slow_cast_to_int32_type_t)&slow_cast_to_int32_from_int8_t,
-							(slow_cast_to_int32_type_t)&slow_cast_to_int32_from_uint16_t,
-							(slow_cast_to_int32_type_t)&slow_cast_to_int32_from_int16_t,
-							(slow_cast_to_int32_type_t)&slow_cast_to_int32_from_int32_t,
-							(slow_cast_to_int32_type_t)&slow_cast_to_int32_from_int32_t,
-							(slow_cast_to_int32_type_t)&slow_cast_to_int32_from_int64_t,
-							(slow_cast_to_int32_type_t)&slow_cast_to_int32_from_float};
+const cast_to_int32_type_t cast_to_int32_func_list[] = {
+							(cast_to_int32_type_t)&cast_to_int32_from_uint8_t,
+							(cast_to_int32_type_t)&cast_to_int32_from_int8_t,
+							(cast_to_int32_type_t)&cast_to_int32_from_uint16_t,
+							(cast_to_int32_type_t)&cast_to_int32_from_int16_t,
+							(cast_to_int32_type_t)&cast_to_int32_from_int32_t,
+							(cast_to_int32_type_t)&cast_to_int32_from_int32_t,
+							(cast_to_int32_type_t)&cast_to_int32_from_int64_t,
+							(cast_to_int32_type_t)&cast_to_int32_from_float};
 
-const slow_cast_to_type_from_int32_t cast_from_int32_func_list[] = {
-							(slow_cast_to_type_from_int32_t)&slow_cast_to_uint8_t_from_int32,
-							(slow_cast_to_type_from_int32_t)&slow_cast_to_int8_t_from_int32,
-							(slow_cast_to_type_from_int32_t)&slow_cast_to_uint16_t_from_int32,
-							(slow_cast_to_type_from_int32_t)&slow_cast_to_int16_t_from_int32,
-							(slow_cast_to_type_from_int32_t)&slow_cast_to_int32_t_from_int32,
-							(slow_cast_to_type_from_int32_t)&slow_cast_to_int32_t_from_int32,
-							(slow_cast_to_type_from_int32_t)&slow_cast_to_int64_t_from_int32,
-							(slow_cast_to_type_from_int32_t)&slow_cast_to_float_from_int32};
+const cast_to_type_from_int32_t cast_from_int32_func_list[] = {
+							(cast_to_type_from_int32_t)&cast_to_uint8_t_from_int32,
+							(cast_to_type_from_int32_t)&cast_to_int8_t_from_int32,
+							(cast_to_type_from_int32_t)&cast_to_uint16_t_from_int32,
+							(cast_to_type_from_int32_t)&cast_to_int16_t_from_int32,
+							(cast_to_type_from_int32_t)&cast_to_int32_t_from_int32,
+							(cast_to_type_from_int32_t)&cast_to_int32_t_from_int32,
+							(cast_to_type_from_int32_t)&cast_to_int64_t_from_int32,
+							(cast_to_type_from_int32_t)&cast_to_float_from_int32};
 
-const slow_cast_to_type_from_float cast_from_float_func_list[] = {
-							(slow_cast_to_type_from_float)&slow_cast_to_uint8_t_from_float,
-							(slow_cast_to_type_from_float)&slow_cast_to_int8_t_from_float,
-							(slow_cast_to_type_from_float)&slow_cast_to_uint16_t_from_float,
-							(slow_cast_to_type_from_float)&slow_cast_to_int16_t_from_float,
-							(slow_cast_to_type_from_float)&slow_cast_to_int32_t_from_float,
-							(slow_cast_to_type_from_float)&slow_cast_to_int32_t_from_float,
-							(slow_cast_to_type_from_float)&slow_cast_to_int64_t_from_float,
-							(slow_cast_to_type_from_float)&slow_cast_to_int32_t_from_int32};
+const cast_to_type_from_float_t cast_from_float_func_list[] = {
+							(cast_to_type_from_float_t)&cast_to_uint8_t_from_float,
+							(cast_to_type_from_float_t)&cast_to_int8_t_from_float,
+							(cast_to_type_from_float_t)&cast_to_uint16_t_from_float,
+							(cast_to_type_from_float_t)&cast_to_int16_t_from_float,
+							(cast_to_type_from_float_t)&cast_to_int32_t_from_float,
+							(cast_to_type_from_float_t)&cast_to_int32_t_from_float,
+							(cast_to_type_from_float_t)&cast_to_int64_t_from_float,
+							(cast_to_type_from_float_t)&cast_to_int32_t_from_int32};
 
 int python_type_to_index(char ch, int *w)
 {
@@ -198,15 +189,7 @@ void cast_to_float_from_type(float *d, void *s, int *stride, int *shape, char ty
 {
 	int width, n;
 	type = python_type_to_index(type, &width);
-	/*if (!(shape[1] & 3) && (stride[1] == width))
-	{
-		n = stride[1] * shape[1];
-		if (!shape[0] || stride[0] == n)
-		{
-
-		}
-	}*/
-	slow_cast_to_float_type_t func = slow_cast_to_float_func_list[type];
+	cast_to_float_type_t func = cast_to_float_func_list[type];
 	func(d, (char*)s, stride, shape);
 }
 
@@ -214,7 +197,7 @@ void cast_to_int32_from_type(int *d, void *s, int *stride, int *shape, char type
 {
 	int width, n;
 	type = python_type_to_index(type, &width);
-	slow_cast_to_int32_type_t func = slow_cast_to_int32_func_list[type];
+	cast_to_int32_type_t func = cast_to_int32_func_list[type];
 	func(d, (char*)s, stride, shape);
 }
 
@@ -222,7 +205,7 @@ void cast_to_type_from_float(void *d, float *s, int *stride, int *shape, char ty
 {
 	int width, n;
 	type = python_type_to_index(type, &width);
-	slow_cast_to_type_from_float func = cast_from_float_func_list[type];
+	cast_to_type_from_float_t func = cast_from_float_func_list[type];
 	func((char*)d, s, stride, shape);
 }
 
@@ -230,7 +213,7 @@ void cast_to_type_from_int32(void *d, int *s, int *stride, int *shape, char type
 {
 	int width, n;
 	type = python_type_to_index(type, &width);
-	slow_cast_to_type_from_int32_t func = cast_from_int32_func_list[type];
+	cast_to_type_from_int32_t func = cast_from_int32_func_list[type];
 	func((char*)d, s, stride, shape);
 }
 

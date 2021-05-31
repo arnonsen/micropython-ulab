@@ -930,7 +930,9 @@ STATIC uint8_t ndarray_init_helper(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 
 STATIC mp_obj_t ndarray_make_new_core(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args, mp_map_t *kw_args) {
-    uint8_t dtype = ndarray_init_helper(n_args, args, kw_args);
+	uint8_t dtype = NDARRAY_FLOAT;
+	if(kw_args)
+		dtype = ndarray_init_helper(n_args, args, kw_args);
 
     if(mp_obj_is_type(args[0], &ulab_ndarray_type)) {
         ndarray_obj_t *source = MP_OBJ_TO_PTR(args[0]);
@@ -1727,8 +1729,12 @@ ndarray_obj_t *match_type_to_array(mp_obj_t obj, int is_lower_case) // bit5 == l
 		width = mp_binary_get_size('@', type, NULL);
 		memcpy(ndarray->array, &value, width);
 	}
-	else 
-		mp_raise_TypeError(translate("wrong operand type"));
+	else
+	{
+		mp_obj_t pos_args[1] = { obj };
+		return ndarray_make_new_core(&ulab_ndarray_type, 1, 0, pos_args, 0);
+		//mp_raise_TypeError(translate("wrong operand type"));
+	}		
 	return ndarray;
 }
 
@@ -1762,9 +1768,13 @@ ndarray_obj_t *ndarray_from_mp_obj(mp_obj_t obj) {
         array[0] = (mp_float_t)fvalue;
     } else if(mp_obj_is_type(obj, &ulab_ndarray_type)){
         return obj;
-    } else {
-        mp_raise_TypeError(translate("wrong operand type"));
-    }
+	} else {
+		mp_obj_t pos_args[1] = { obj };
+		return ndarray_make_new_core(&ulab_ndarray_type, 1, 0, pos_args, 0);
+	}
+//    } else {
+ //       mp_raise_TypeError(translate("wrong operand type"));
+//    }
     return ndarray;
 }
 
@@ -1792,7 +1802,12 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
 		rhs = match_type_to_array(robj, ((ndarray_obj_t*)lobj)->dtype & 32);
 	}
 	else
-		mp_raise_TypeError(translate("wrong operand type"));
+	{
+		lhs = match_type_to_array(lobj, 1);
+		rhs = match_type_to_array(robj, 1);
+		//lhs = ndarray_from_mp_obj(lobj);
+		//rhs = ndarray_from_mp_obj(robj);
+	}
 
     if((op >= MP_BINARY_OP_REVERSE_OR) && (op <= MP_BINARY_OP_REVERSE_POWER)){
 		tmp = lhs;	// swap right and left	
@@ -1816,7 +1831,152 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
         mp_raise_ValueError(translate("operands could not be broadcast together"));
     }
     // the empty arrays have to be treated separately
+
+#if NUMPY_OPERATORS_USE_TEMPORARY_BUFFER
 	return ndarray_multiple_binary_operators(lhs, rhs, ndim, shape, lstrides, rstrides, op);
+#else
+	dtype = NDARRAY_INT16;
+	ndarray_obj_t *nd;
+	if ((lhs->ndim == 0) || (rhs->ndim == 0)) {
+		switch (op) {
+		case MP_BINARY_OP_INPLACE_ADD:
+		case MP_BINARY_OP_INPLACE_MULTIPLY:
+		case MP_BINARY_OP_INPLACE_SUBTRACT:
+		case MP_BINARY_OP_ADD:
+		case MP_BINARY_OP_MULTIPLY:
+		case MP_BINARY_OP_SUBTRACT:
+			// here we don't have to list those cases that result in an int16,
+			// because dtype is initialised with that NDARRAY_INT16
+			if (lhs->dtype == rhs->dtype) {
+				dtype = rhs->dtype;
+			}
+			else if ((lhs->dtype == NDARRAY_FLOAT) || (rhs->dtype == NDARRAY_FLOAT)) {
+				dtype = NDARRAY_FLOAT;
+			}
+			else if (((lhs->dtype == NDARRAY_UINT8) && (rhs->dtype == NDARRAY_UINT16)) ||
+				((lhs->dtype == NDARRAY_INT8) && (rhs->dtype == NDARRAY_UINT16)) ||
+				((rhs->dtype == NDARRAY_UINT8) && (lhs->dtype == NDARRAY_UINT16)) ||
+				((rhs->dtype == NDARRAY_INT8) && (lhs->dtype == NDARRAY_UINT16))) {
+				dtype = NDARRAY_UINT16;
+			}
+			return MP_OBJ_FROM_PTR(ndarray_new_linear_array(0, dtype));
+			break;
+
+		case MP_BINARY_OP_INPLACE_POWER:
+		case MP_BINARY_OP_INPLACE_TRUE_DIVIDE:
+		case MP_BINARY_OP_POWER:
+		case MP_BINARY_OP_TRUE_DIVIDE:
+			return MP_OBJ_FROM_PTR(ndarray_new_linear_array(0, NDARRAY_FLOAT));
+			break;
+
+		case MP_BINARY_OP_LESS:
+		case MP_BINARY_OP_LESS_EQUAL:
+		case MP_BINARY_OP_MORE:
+		case MP_BINARY_OP_MORE_EQUAL:
+		case MP_BINARY_OP_EQUAL:
+		case MP_BINARY_OP_NOT_EQUAL:
+			nd = ndarray_new_linear_array(0, NDARRAY_UINT8);
+			nd->boolean = true;
+			return MP_OBJ_FROM_PTR(nd);
+
+		default:
+			return mp_const_none;
+			break;
+		}
+	}
+
+	switch (op) {
+		// first the in-place operators
+#if NDARRAY_HAS_INPLACE_ADD
+	case MP_BINARY_OP_INPLACE_ADD:
+		return ndarray_inplace_ams(lhs, rhs, rstrides, op);
+		break;
+#endif
+#if NDARRAY_HAS_INPLACE_MULTIPLY
+	case MP_BINARY_OP_INPLACE_MULTIPLY:
+		return ndarray_inplace_ams(lhs, rhs, rstrides, op);
+		break;
+#endif
+#if NDARRAY_HAS_INPLACE_POWER
+	case MP_BINARY_OP_INPLACE_POWER:
+		return ndarray_inplace_power(lhs, rhs, rstrides);
+		break;
+#endif
+#if NDARRAY_HAS_INPLACE_SUBTRACT
+	case MP_BINARY_OP_INPLACE_SUBTRACT:
+		return ndarray_inplace_ams(lhs, rhs, rstrides, op);
+		break;
+#endif
+#if NDARRAY_HAS_INPLACE_TRUE_DIVIDE
+	case MP_BINARY_OP_INPLACE_TRUE_DIVIDE:
+		return ndarray_inplace_divide(lhs, rhs, rstrides);
+		break;
+#endif
+		// end if in-place operators
+
+#if NDARRAY_HAS_BINARY_OP_LESS
+	case MP_BINARY_OP_LESS:
+		// here we simply swap the operands
+		return ndarray_binary_more(rhs, lhs, ndim, shape, rstrides, lstrides, MP_BINARY_OP_MORE);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_LESS_EQUAL
+	case MP_BINARY_OP_LESS_EQUAL:
+		// here we simply swap the operands
+		return ndarray_binary_more(rhs, lhs, ndim, shape, rstrides, lstrides, MP_BINARY_OP_MORE_EQUAL);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_EQUAL
+	case MP_BINARY_OP_EQUAL:
+		return ndarray_binary_equality(lhs, rhs, ndim, shape, lstrides, rstrides, MP_BINARY_OP_EQUAL);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_NOT_EQUAL
+	case MP_BINARY_OP_NOT_EQUAL:
+		return ndarray_binary_equality(lhs, rhs, ndim, shape, lstrides, rstrides, MP_BINARY_OP_NOT_EQUAL);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_ADD
+	case MP_BINARY_OP_ADD:
+		return ndarray_binary_add(lhs, rhs, ndim, shape, lstrides, rstrides);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_MULTIPLY
+	case MP_BINARY_OP_MULTIPLY:
+		return ndarray_binary_multiply(lhs, rhs, ndim, shape, lstrides, rstrides);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_MORE
+	case MP_BINARY_OP_MORE:
+		return ndarray_binary_more(lhs, rhs, ndim, shape, lstrides, rstrides, MP_BINARY_OP_MORE);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_MORE_EQUAL
+	case MP_BINARY_OP_MORE_EQUAL:
+		return ndarray_binary_more(lhs, rhs, ndim, shape, lstrides, rstrides, MP_BINARY_OP_MORE_EQUAL);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_SUBTRACT
+	case MP_BINARY_OP_SUBTRACT:
+		return ndarray_binary_subtract(lhs, rhs, ndim, shape, lstrides, rstrides);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_TRUE_DIVIDE
+	case MP_BINARY_OP_TRUE_DIVIDE:
+		return ndarray_binary_true_divide(lhs, rhs, ndim, shape, lstrides, rstrides);
+		break;
+#endif
+#if NDARRAY_HAS_BINARY_OP_POWER
+	case MP_BINARY_OP_POWER:
+		return ndarray_binary_power(lhs, rhs, ndim, shape, lstrides, rstrides);
+		break;
+#endif
+	default:
+		return MP_OBJ_NULL; // op not supported
+		break;
+	}
+	return MP_OBJ_NULL;
+#endif	
 }
 #endif /* NDARRAY_HAS_BINARY_OPS || NDARRAY_HAS_INPLACE_OPS */
 

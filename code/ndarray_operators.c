@@ -29,6 +29,7 @@
 
 */
 
+#if NUMPY_OPERATORS_USE_TEMPORARY_BUFFER
 uint8_t operator_upcasting_rule(uint8_t a, uint8_t b)
 {
 	if		(a == NDARRAY_FLOAT || b == NDARRAY_FLOAT) a = NDARRAY_FLOAT;
@@ -51,6 +52,7 @@ uint8_t operator_upcasting_rule(uint8_t a, uint8_t b)
 	return a;
 }
 
+
 int allocate_temp_buff_for_operator(uint8_t ndim, size_t *shape, int** p1, int **p2)
 {
 	int n = 4;
@@ -64,7 +66,7 @@ int allocate_temp_buff_for_operator(uint8_t ndim, size_t *shape, int** p1, int *
 	return n>>2;
 }
 
-#if NDARRAY_HAS_BINARY_OP_EQUAL | NDARRAY_HAS_BINARY_OP_NOT_EQUAL
+
 mp_obj_t ndarray_multiple_binary_operators(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 	uint8_t ndim, size_t *shape, int32_t *lstrides, int32_t *rstrides, mp_binary_op_t op)
 {
@@ -162,6 +164,11 @@ mp_obj_t ndarray_multiple_binary_operators(ndarray_obj_t *lhs, ndarray_obj_t *rh
 	{
 		switch (op)
 		{
+		case MP_COMPARE_OP_MINIMUM:		for (i = 0; i < n; i++, p1++, p2++)	*p1 = *p1 < *p2 ? *p1 : *p2; op = 0; break;
+		case MP_COMPARE_OP_MAXIMUM:		for (i = 0; i < n; i++, p1++, p2++)	*p1 = *p1 > *p2 ? *p1 : *p2; op = 0; break;
+		}
+		if(op) switch (op)
+		{
 		case MP_BINARY_OP_ADD:			for (i = 0; i < n; i++, f1++, f2++) *f1 = *f1 + *f2; break;
 		case MP_BINARY_OP_SUBTRACT:		for (i = 0; i < n; i++, f1++, f2++) *f1 = *f1 - *f2; break;
 		case MP_BINARY_OP_MULTIPLY:		for (i = 0; i < n; i++, f1++, f2++) *f1 = *f1 * *f2; break;
@@ -175,6 +182,11 @@ mp_obj_t ndarray_multiple_binary_operators(ndarray_obj_t *lhs, ndarray_obj_t *rh
 	else
 	{
 		switch (op)
+		{
+		case MP_COMPARE_OP_MINIMUM:		for (i = 0; i < n; i++, p1++, p2++)	*p1 = *p1 < *p2 ? *p1 : *p2; op = 0; break;
+		case MP_COMPARE_OP_MAXIMUM:		for (i = 0; i < n; i++, p1++, p2++)	*p1 = *p1 > *p2 ? *p1 : *p2; op = 0; break;
+		}
+		if(op) switch (op)
 		{
 		case MP_BINARY_OP_ADD:			for (i = 0; i < n; i++, p1++, p2++)	*p1 = *p1 + *p2; break;
 		case MP_BINARY_OP_SUBTRACT:		for (i = 0; i < n; i++, p1++, p2++)	*p1 = *p1 - *p2; break;
@@ -195,7 +207,9 @@ mp_obj_t ndarray_multiple_binary_operators(ndarray_obj_t *lhs, ndarray_obj_t *rh
 }
 #endif
 
-#if (NDARRAY_HAS_BINARY_OP_EQUAL | NDARRAY_HAS_BINARY_OP_NOT_EQUAL) //*(1 - DSPG)
+#if NUMPY_OPERATORS_USE_TEMPORARY_BUFFER == 0
+
+#if NDARRAY_HAS_BINARY_OP_EQUAL || NDARRAY_HAS_BINARY_OP_NOT_EQUAL
 mp_obj_t ndarray_binary_equality(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
                                             uint8_t ndim, size_t *shape,  int32_t *lstrides, int32_t *rstrides, mp_binary_op_t op) {
 
@@ -317,7 +331,7 @@ mp_obj_t ndarray_binary_equality(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 }
 #endif /* NDARRAY_HAS_BINARY_OP_EQUAL | NDARRAY_HAS_BINARY_OP_NOT_EQUAL */
 
-#if NDARRAY_HAS_BINARY_OP_ADD*(1 - DSPG)
+#if NDARRAY_HAS_BINARY_OP_ADD
 mp_obj_t ndarray_binary_add(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
                                         uint8_t ndim, size_t *shape, int32_t *lstrides, int32_t *rstrides) {
 
@@ -394,7 +408,7 @@ mp_obj_t ndarray_binary_add(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 }
 #endif /* NDARRAY_HAS_BINARY_OP_ADD */
 
-#if NDARRAY_HAS_BINARY_OP_MULTIPLY*(1 - DSPG)
+#if NDARRAY_HAS_BINARY_OP_MULTIPLY
 mp_obj_t ndarray_binary_multiply(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
                                             uint8_t ndim, size_t *shape, int32_t *lstrides, int32_t *rstrides) {
 
@@ -471,7 +485,7 @@ mp_obj_t ndarray_binary_multiply(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 }
 #endif /* NDARRAY_HAS_BINARY_OP_MULTIPLY */
 
-#if (NDARRAY_HAS_BINARY_OP_MORE | NDARRAY_HAS_BINARY_OP_MORE_EQUAL | NDARRAY_HAS_BINARY_OP_LESS | NDARRAY_HAS_BINARY_OP_LESS_EQUAL)*(1 - DSPG)
+#if NDARRAY_HAS_BINARY_OP_MORE || NDARRAY_HAS_BINARY_OP_MORE_EQUAL || NDARRAY_HAS_BINARY_OP_LESS || NDARRAY_HAS_BINARY_OP_LESS_EQUAL
 mp_obj_t ndarray_binary_more(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
                                             uint8_t ndim, size_t *shape, int32_t *lstrides, int32_t *rstrides, mp_binary_op_t op) {
 
@@ -616,7 +630,7 @@ mp_obj_t ndarray_binary_more(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 }
 #endif /* NDARRAY_HAS_BINARY_OP_MORE | NDARRAY_HAS_BINARY_OP_MORE_EQUAL | NDARRAY_HAS_BINARY_OP_LESS | NDARRAY_HAS_BINARY_OP_LESS_EQUAL */
 
-#if NDARRAY_HAS_BINARY_OP_SUBTRACT*(1 - DSPG)
+#if NDARRAY_HAS_BINARY_OP_SUBTRACT
 mp_obj_t ndarray_binary_subtract(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
                                             uint8_t ndim, size_t *shape, int32_t *lstrides, int32_t *rstrides) {
 
@@ -715,7 +729,7 @@ mp_obj_t ndarray_binary_subtract(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 }
 #endif /* NDARRAY_HAS_BINARY_OP_SUBTRACT */
 
-#if NDARRAY_HAS_BINARY_OP_TRUE_DIVIDE*(1 - DSPG)
+#if NDARRAY_HAS_BINARY_OP_TRUE_DIVIDE
 mp_obj_t ndarray_binary_true_divide(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
                                             uint8_t ndim, size_t *shape, int32_t *lstrides, int32_t *rstrides) {
 
@@ -801,7 +815,7 @@ mp_obj_t ndarray_binary_true_divide(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 }
 #endif /* NDARRAY_HAS_BINARY_OP_TRUE_DIVIDE */
 
-#if NDARRAY_HAS_BINARY_OP_POWER*(1 - DSPG)
+#if NDARRAY_HAS_BINARY_OP_POWER
 mp_obj_t ndarray_binary_power(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
                                             uint8_t ndim, size_t *shape, int32_t *lstrides, int32_t *rstrides) {
 
@@ -889,7 +903,7 @@ mp_obj_t ndarray_binary_power(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 }
 #endif /* NDARRAY_HAS_BINARY_OP_POWER */
 
-#if (NDARRAY_HAS_INPLACE_ADD || NDARRAY_HAS_INPLACE_MULTIPLY || NDARRAY_HAS_INPLACE_SUBTRACT)*(1 - DSPG)
+#if NDARRAY_HAS_INPLACE_ADD || NDARRAY_HAS_INPLACE_MULTIPLY || NDARRAY_HAS_INPLACE_SUBTRACT
 mp_obj_t ndarray_inplace_ams(ndarray_obj_t *lhs, ndarray_obj_t *rhs, int32_t *rstrides, uint8_t optype) {
 
     if((lhs->dtype != NDARRAY_FLOAT) && (rhs->dtype == NDARRAY_FLOAT)) {
@@ -965,3 +979,4 @@ mp_obj_t ndarray_inplace_power(ndarray_obj_t *lhs, ndarray_obj_t *rhs, int32_t *
     return MP_OBJ_FROM_PTR(lhs);
 }
 #endif /* NDARRAY_HAS_INPLACE_POWER */
+#endif //  !NUMPY_OPERATORS_USE_TEMPORARY_BUFFER)

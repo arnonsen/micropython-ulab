@@ -15,14 +15,6 @@
 #include "../../ulab.h"
 #include "../../ndarray.h"
 
-enum COMPARE_FUNCTION_TYPE {
-    COMPARE_EQUAL,
-    COMPARE_NOT_EQUAL,
-    COMPARE_MINIMUM,
-    COMPARE_MAXIMUM,
-    COMPARE_CLIP,
-};
-
 MP_DECLARE_CONST_FUN_OBJ_3(compare_clip_obj);
 MP_DECLARE_CONST_FUN_OBJ_2(compare_equal_obj);
 MP_DECLARE_CONST_FUN_OBJ_2(compare_isfinite_obj);
