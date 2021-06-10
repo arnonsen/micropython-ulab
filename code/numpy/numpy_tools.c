@@ -16,6 +16,8 @@
 #include "ndarray.h"
 #include "ulab_tools.h"
 
+int python_type_to_index(char ch, int* w);
+
 #define CAST_TO_FLOAT_FROM_X(type)	\
 	void cast_to_float_from_ ## type(float *dest, char *src, int *stribe, int *shape)	\
 	{																	\
@@ -157,6 +159,20 @@ const cast_to_type_from_float_t cast_from_float_func_list[] = {
 							(cast_to_type_from_float_t)&cast_to_int32_t_from_float,
 							(cast_to_type_from_float_t)&cast_to_int64_t_from_float,
 							(cast_to_type_from_float_t)&cast_to_int32_t_from_int32};
+
+#if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_FLOAT
+const char float_type_string[] = "float32";
+#else
+const char float_type_string[] = "float64";
+#endif
+
+const char* dtype_index_to_sting[] = { "uint8", "int8", "uint16", "int16", "uint32", "int32", "int64", float_type_string};
+
+const char* python_type_to_string(int type)
+{
+	int w;
+	return  dtype_index_to_sting[python_type_to_index(type, &w)];
+}
 
 int python_type_to_index(char ch, int *w)
 {

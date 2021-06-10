@@ -619,20 +619,11 @@ void ndarray_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t ki
         ndarray_print_bracket(print, 0, self->shape[ULAB_MAX_DIMS-4], "]");
         #endif
     }
-    if(self->boolean)						mp_print_str(print, ", dtype=bool)");
-    else if(self->dtype == NDARRAY_UINT8)	mp_print_str(print, ", dtype=uint8)");
-    else if(self->dtype == NDARRAY_INT8)	mp_print_str(print, ", dtype=int8)");
-    else if(self->dtype == NDARRAY_UINT16)	mp_print_str(print, ", dtype=uint16)");
-    else if(self->dtype == NDARRAY_INT16)	mp_print_str(print, ", dtype=int16)");
-	else if(self->dtype == NDARRAY_UINT32)	mp_print_str(print, ", dtype=uint32)");
-	else if(self->dtype == NDARRAY_INT32)	mp_print_str(print, ", dtype=int32)");
-	else if(self->dtype == NDARRAY_INT64)	mp_print_str(print, ", dtype=int64)");
-	else {
-        #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_FLOAT
-        mp_print_str(print, ", dtype=float32)");
-        #else
-        mp_print_str(print, ", dtype=float64)");
-        #endif
+    if(self->boolean)	mp_print_str(print, ", dtype=bool)");
+    else {
+        mp_print_str(print, ", dtype=");
+        mp_print_str(print, python_type_to_string(self->dtype));
+        mp_print_str(print, ")");
     }
 }
 
@@ -2164,15 +2155,11 @@ mp_obj_t ndarray_info(mp_obj_t obj_in) {
     mp_printf(MP_PYTHON_PRINTER, "itemsize: %d\n", ndarray->itemsize);
     mp_printf(MP_PYTHON_PRINTER, "data pointer: 0x%p\n", ndarray->array);
     mp_printf(MP_PYTHON_PRINTER, "type: ");
-    if(ndarray->boolean)						mp_printf(MP_PYTHON_PRINTER, "bool\n");
-    else if (ndarray->dtype == NDARRAY_UINT8)   mp_printf(MP_PYTHON_PRINTER, "uint8\n");
-    else if (ndarray->dtype == NDARRAY_INT8)    mp_printf(MP_PYTHON_PRINTER, "int8\n");
-    else if (ndarray->dtype == NDARRAY_UINT16)  mp_printf(MP_PYTHON_PRINTER, "uint16\n");
-    else if (ndarray->dtype == NDARRAY_INT16)   mp_printf(MP_PYTHON_PRINTER, "int16\n");
-	else if (ndarray->dtype == NDARRAY_UINT32)  mp_printf(MP_PYTHON_PRINTER, "uint32\n");
-	else if (ndarray->dtype == NDARRAY_INT32)   mp_printf(MP_PYTHON_PRINTER, "int32\n");
-	else if (ndarray->dtype == NDARRAY_INT64)   mp_printf(MP_PYTHON_PRINTER, "int64\n");
-	else if (ndarray->dtype == NDARRAY_FLOAT)   mp_printf(MP_PYTHON_PRINTER, "float\n");    
+    if (ndarray->boolean) {
+        mp_printf(MP_PYTHON_PRINTER, "bool\n");
+    } else {
+        mp_printf(MP_PYTHON_PRINTER, "%s\n", python_type_to_string(ndarray->dtype));
+    }
     return mp_const_none;
 }
 
