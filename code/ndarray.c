@@ -23,6 +23,7 @@
 
 #include "ulab_tools.h"
 #include "ndarray.h"
+#include "ndscalar.h"
 #include "ndarray_operators.h"
 
 mp_uint_t ndarray_print_threshold = NDARRAY_PRINT_THRESHOLD;
@@ -388,20 +389,10 @@ void ndarray_dtype_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
     mp_print_str(print, "dtype('");
     if(self->dtype == NDARRAY_BOOLEAN) {
         mp_print_str(print, "bool')");
-    } else if(self->dtype == NDARRAY_UINT8) {
-        mp_print_str(print, "uint8')");
-    } else if(self->dtype == NDARRAY_INT8) {
-        mp_print_str(print, "int8')");
-    } else if(self->dtype == NDARRAY_UINT16) {
-        mp_print_str(print, "uint16')");
-    } else if(self->dtype == NDARRAY_INT16) {
-        mp_print_str(print, "int16')");
-    } else {
-        #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_FLOAT
-        mp_print_str(print, "float32')");
-        #else
-        mp_print_str(print, "float64')");
-        #endif
+    }
+    else {
+        mp_print_str(print, python_type_to_string(self->dtype));
+        mp_print_str(print, "')");
     }
 }
 
@@ -798,6 +789,8 @@ ndarray_obj_t *ndarray_copy_view(ndarray_obj_t *source) {
     }
     ndarray_obj_t *ndarray = ndarray_new_ndarray(source->ndim, source->shape, strides, dtype);
     ndarray_copy_array(source, ndarray);
+    ndarray->boolean = source->boolean;
+    ndarray->dtype = source->dtype;
     return ndarray;
 }
 
@@ -915,7 +908,18 @@ STATIC uint8_t ndarray_init_helper(size_t n_args, const mp_obj_t *pos_args, mp_m
         _dtype = mp_obj_get_int(args[1].u_obj);
     }
     #else
+    #if NUMPY_HAS_DTYPE_SCALAR
+    if (mp_obj_is_type((args[1].u_obj), &mp_type_fun_builtin_var)) {
+        mp_obj_fun_builtin_var_t* obj = MP_OBJ_TO_PTR(args[1].u_obj);
+        if (obj->fun.kw) {
+            obj = obj->fun.kw(0, 0, 0);
+            return MP_OBJ_SMALL_INT_VALUE(obj);
+        }
+    }
+    mp_raise_ValueError(MP_ERROR_TEXT("can't get dtype"));
+    #else
     _dtype = mp_obj_get_int(args[1].u_obj);
+    #endif
     #endif
     return _dtype;
 }
@@ -1451,7 +1455,11 @@ static mp_obj_t ndarray_get_slice(ndarray_obj_t *ndarray, mp_obj_t index, ndarra
         if(values == NULL) { // return value(s)
             // if the view has been reduced to nothing, return a single value
             if(view->ndim == 0) {
+                #if NUMPY_HAS_DTYPE_SCALAR
+                return ndscalare_from_array(view->dtype, view->array, view->itemsize);
+                #else
                 return mp_binary_get_val_array(view->dtype, view->array, 0);
+                #endif
             } else {
                 return MP_OBJ_FROM_PTR(view);
             }
@@ -1685,12 +1693,35 @@ MP_DEFINE_CONST_FUN_OBJ_1(ndarray_tobytes_obj, ndarray_tobytes);
 #endif
 
 // Binary operations
+
+uint8_t var_value_to_type(int value, int is_lower_case)
+{
+    int type = NDARRAY_INT32;
+    if (value < 0) {
+        if (value >= -128) type = NDARRAY_INT8;
+        else if (value >= -32768) type = NDARRAY_INT16;
+    }
+    else
+    {
+        if (is_lower_case) {
+            if (value < 128) type = NDARRAY_INT8;
+            else if (value < 32768) type = NDARRAY_INT16;
+        }
+        else {
+            type = NDARRAY_UINT32;
+            if (value < 256) type = NDARRAY_UINT8;
+            else if (value < 65536) type = NDARRAY_UINT16;
+        }
+    }
+    return type;
+}
+
+
 ndarray_obj_t *match_type_to_array(mp_obj_t obj, int is_lower_case) // bit5 == lower case == signed value
 {
 	uint8_t type, minus, width;
 	int value;
-	ndarray_obj_t *ndarray;
-	type = NDARRAY_INT32;
+	ndarray_obj_t *ndarray;	
 
 	if (mp_obj_is_float(obj)) {
 		mp_float_t fvalue = mp_obj_get_float(obj);
@@ -1700,26 +1731,16 @@ ndarray_obj_t *match_type_to_array(mp_obj_t obj, int is_lower_case) // bit5 == l
 	}
 	else if (mp_obj_is_int(obj)) {
 		int32_t value = mp_obj_get_int(obj);
-		if (value < 0) {
-			if (value >= -128) type = NDARRAY_INT8;
-			else if (value >= -32768) type = NDARRAY_INT16;
-		}
-		else
-		{
-			if (is_lower_case) {
-				if (value < 128) type = NDARRAY_INT8;
-				else if (value < 32768) type = NDARRAY_INT16;
-			}
-			else {
-				type = NDARRAY_UINT32; 
-				if (value < 256) type = NDARRAY_UINT8;
-				else if (value < 65536) type = NDARRAY_UINT16;
-			}
-		}
+        type = var_value_to_type(value, is_lower_case);
 		ndarray = ndarray_new_linear_array(1, type);
 		width = mp_binary_get_size('@', type, NULL);
 		memcpy(ndarray->array, &value, width);
 	}
+    else if (mp_obj_is_ndscalar_type(obj)) {
+        ndscalar_obj_t* scalar = (ndscalar_obj_t*)obj;
+        ndarray = ndarray_new_linear_array(1, scalar->dtype);        
+        memcpy(ndarray->array, &value, scalar->itemsize);
+    }
 	else
 	{
 		mp_obj_t pos_args[1] = { obj };
@@ -1770,42 +1791,32 @@ ndarray_obj_t *ndarray_from_mp_obj(mp_obj_t obj) {
 }
 
 #if NDARRAY_HAS_BINARY_OPS || NDARRAY_HAS_INPLACE_OPS
-mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
-    // TODO: implement in-place operators
-    // if the ndarray stands on the right hand side of the expression, simply swap the operands
+mp_obj_t ndarray_binary_op(mp_binary_op_t op, mp_obj_t lobj, mp_obj_t robj) {
     ndarray_obj_t *lhs, *rhs, *tmp;
-    mp_binary_op_t op = _op;
 	uint8_t dtype, is_upper_case;
 
-	if (mp_obj_is_type(robj, &ulab_ndarray_type) && mp_obj_is_type(lobj, &ulab_ndarray_type))
+	if (mp_obj_is_type(robj, &ulab_ndarray_type) && mp_obj_is_type(lobj, &ulab_ndarray_type))   // ARRAY vs. ARRAY
 	{
 		lhs = (ndarray_obj_t*)lobj;
 		rhs = (ndarray_obj_t*)robj;
 	}
-	else if (mp_obj_is_type(robj, &ulab_ndarray_type))
+	else if (mp_obj_is_type(robj, &ulab_ndarray_type))  // X vs. ARRAY
 	{
 		rhs = (ndarray_obj_t*)robj;
 		lhs = match_type_to_array(lobj, ((ndarray_obj_t*)robj)->dtype & 32);
 	}
-	else if (mp_obj_is_type(lobj, &ulab_ndarray_type))
+	else if (mp_obj_is_type(lobj, &ulab_ndarray_type))  // ARRAY vs. X
 	{
 		lhs = (ndarray_obj_t*)lobj;
 		rhs = match_type_to_array(robj, ((ndarray_obj_t*)lobj)->dtype & 32);
 	}
-	else
-	{
-		lhs = match_type_to_array(lobj, 1);
-		rhs = match_type_to_array(robj, 1);
+	else {
+        mp_raise_TypeError(translate("wrong operand type"));
+		//lhs = match_type_to_array(lobj, 1);
+		//rhs = match_type_to_array(robj, 1);
 		//lhs = ndarray_from_mp_obj(lobj);
 		//rhs = ndarray_from_mp_obj(robj);
 	}
-
-    if((op >= MP_BINARY_OP_REVERSE_OR) && (op <= MP_BINARY_OP_REVERSE_POWER)){
-		tmp = lhs;	// swap right and left	
-		lhs = rhs;
-		rhs = tmp;
-		op = op - MP_BINARY_OP_REVERSE_OR + MP_BINARY_OP_OR;
-    }
 
     uint8_t ndim = 0;
 	size_t shape[ULAB_MAX_DIMS] = { 0 };
@@ -1824,7 +1835,7 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
     // the empty arrays have to be treated separately
 
 #if NUMPY_OPERATORS_USE_TEMPORARY_BUFFER
-	return ndarray_multiple_binary_operators(lhs, rhs, ndim, shape, lstrides, rstrides, op);
+	return ndarray_operators_prepare(lhs, rhs, ndim, shape, lstrides, rstrides, op);
 #else
 	dtype = NDARRAY_INT16;
 	ndarray_obj_t *nd;
@@ -1975,7 +1986,65 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
 mp_obj_t ndarray_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
     ndarray_obj_t *self = MP_OBJ_TO_PTR(self_in);
     ndarray_obj_t *ndarray = NULL;
-
+#if NUMPY_OPERATORS_USE_TEMPORARY_BUFFER
+    int* p1, *p_temp,i;
+    int n = allocate_temp_buff_for_operator(self->ndim, self->shape, &p1, 0);
+    uint8_t temp_type = self->dtype == NDARRAY_FLOAT ? NDARRAY_FLOAT : NDARRAY_INT32;
+    float* f1 = (float*)p1;
+    p_temp = p1;
+    if (temp_type == NDARRAY_FLOAT) {
+        cast_to_float_from_type(f1, self->array, self->strides, self->shape, self->dtype);
+    } else {
+        cast_to_int32_from_type(p1, self->array, self->strides, self->shape, self->dtype);
+    }
+    switch (op) {
+#if NDARRAY_HAS_UNARY_OP_ABS
+    case MP_UNARY_OP_ABS:
+        ndarray = ndarray_copy_view(self);
+        if (temp_type == NDARRAY_FLOAT) {
+            for (i = 0; i < n; i++, f1++) {
+                *f1 = *f1 < 0 ? -*f1 : *f1;
+            }
+        }
+        else {
+            for (i = 0; i < n; i++, p1++) {
+                *p1 = *p1 < 0 ? -*p1 : *p1;
+            }
+        }
+        break;
+#endif
+#if NDARRAY_HAS_UNARY_OP_INVERT
+    case MP_UNARY_OP_INVERT:        
+        if (temp_type == NDARRAY_FLOAT)
+            mp_raise_ValueError(translate("operation is not supported for given type"));
+        ndarray = ndarray_copy_view(self);
+        if (ndarray->boolean)   for (i = 0; i < n; i++, p1++) *p1 ^= 1;
+        else                    for (i = 0; i < n; i++, p1++) *p1 ^= -1;
+        break;
+#endif
+    case MP_UNARY_OP_LEN:
+        return mp_obj_new_int(self->shape[ULAB_MAX_DIMS - self->ndim]);
+        break;
+#if NDARRAY_HAS_UNARY_OP_NEGATIVE
+    case MP_UNARY_OP_NEGATIVE:
+        ndarray = ndarray_copy_view(self); // from this point, this is a dense copy
+        if (temp_type == NDARRAY_FLOAT) for (i = 0; i < n; i++, f1++) *f1 = -*f1; 
+        else                            for (i = 0; i < n; i++, p1++) *p1 = -*p1;
+        break;
+#endif
+#if NDARRAY_HAS_UNARY_OP_POSITIVE
+    case MP_UNARY_OP_POSITIVE:
+        return MP_OBJ_FROM_PTR(ndarray_copy_view(self));
+#endif
+    default:
+        return MP_OBJ_NULL; // operator not supported
+    }
+    if (temp_type == NDARRAY_FLOAT)
+        cast_to_type_from_float(ndarray->array, (float*)p_temp, ndarray->strides, ndarray->shape, self->dtype);
+    else
+        cast_to_type_from_int32(ndarray->array, p_temp, ndarray->strides, ndarray->shape, self->dtype);    
+    return MP_OBJ_FROM_PTR(ndarray);
+#else
     switch (op) {
         #if NDARRAY_HAS_UNARY_OP_ABS
         case MP_UNARY_OP_ABS:
@@ -2064,6 +2133,7 @@ mp_obj_t ndarray_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
             return MP_OBJ_NULL; // operator not supported
             break;
     }
+#endif
 }
 #endif /* NDARRAY_HAS_UNARY_OPS */
 

@@ -35,4 +35,6 @@ void *ndarray_set_float_function(uint8_t );
 
 shape_strides tools_reduce_axes(ndarray_obj_t *, mp_obj_t );
 ndarray_obj_t *tools_object_is_square(mp_obj_t );
+int python_type_to_index(char ch, int* w);
+mp_obj_t numpy_operators_main(int* p1, int* p2, uint8_t* array8, mp_binary_op_t op, uint8_t temp_type, int n, mp_obj_t results);
 #endif

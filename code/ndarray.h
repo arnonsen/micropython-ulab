@@ -135,6 +135,17 @@ ndarray_obj_t *ndarray_copy_view(ndarray_obj_t *);
 void ndarray_copy_array(ndarray_obj_t *, ndarray_obj_t *);
 
 MP_DECLARE_CONST_FUN_OBJ_KW(ndarray_array_constructor_obj);
+#if NUMPY_HAS_DTYPE_SCALAR
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_bool_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_int8_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_uint8_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_int16_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_uint16_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_int32_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_uint32_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_int64_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(ndscalar_float_obj);
+#endif
 #ifdef CIRCUITPY
 mp_obj_t ndarray_make_new(const mp_obj_type_t *type, size_t n_args, const mp_obj_t *args, mp_map_t *kw_args);
 #else

@@ -128,7 +128,7 @@ const cast_to_float_type_t cast_to_float_func_list[] = {
 							(cast_to_float_type_t)&cast_to_float_from_uint32_t,
 							(cast_to_float_type_t)&cast_to_float_from_int32_t,
 							(cast_to_float_type_t)&cast_to_float_from_int64_t,
-							(cast_to_float_type_t)&cast_to_int32_from_int32_t };
+							(cast_to_float_type_t)&cast_to_int32_from_int32_t };	// same as float -> float
 
 const cast_to_int32_type_t cast_to_int32_func_list[] = {
 							(cast_to_int32_type_t)&cast_to_int32_from_uint8_t,
@@ -158,7 +158,7 @@ const cast_to_type_from_float_t cast_from_float_func_list[] = {
 							(cast_to_type_from_float_t)&cast_to_int32_t_from_float,
 							(cast_to_type_from_float_t)&cast_to_int32_t_from_float,
 							(cast_to_type_from_float_t)&cast_to_int64_t_from_float,
-							(cast_to_type_from_float_t)&cast_to_int32_t_from_int32};
+							(cast_to_type_from_float_t)&cast_to_int32_t_from_int32};	// same as float -> float
 
 #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_FLOAT
 const char float_type_string[] = "float32";
@@ -180,10 +180,11 @@ int python_type_to_index(char ch, int *w)
 	int x=0, is_lower_case = ch & 32;
 	int chu = ch & ~32;		// make upper case
 	*w = sizeof(char);
-	if (ch == 'f') { *w = sizeof(float); return 7;}
-	if (ch == 'q') { *w = sizeof(int64_t); return 6;}
-	if (chu == 'H') *w = x = 2;
-	else if (chu == 'I') *w = x = 4;
+	if (ch == 'f') { *w = sizeof(float); return 7;}		// float
+	if (ch == 'q') { *w = sizeof(int64_t); return 6;}	// int64
+	if (chu == 'H') *w = x = 2;			// 16 bits
+	else if (chu == 'I') *w = x = 4;	// 32 bits
+	else if (chu != 'B') return -1;		// if not 8 bits
 	return is_lower_case ? (x + 1) : x;	
 #else
 	switch(ch)
@@ -252,3 +253,15 @@ void demux_cx(float *re, float *im, float *in, int n_cx)
 }
 
 
+int allocate_temp_buff_for_operator(uint8_t ndim, size_t* shape, int** p1, int** p2)
+{
+	int n = 4;  // for float/int32
+	char* p;
+	if (ndim > 0) n *= shape[ULAB_MAX_DIMS - 1];
+	if (ndim > 1) n *= shape[ULAB_MAX_DIMS - 2];
+	if (ndim > 2) n *= shape[ULAB_MAX_DIMS - 3];
+	p = mp_get_scratch_buffer(n * (p2 ? 2 : 1));  // allocate one or two buffers ?
+	*p1 = (int*)p;
+	if (p2) *p2 = (int*)(p + n);
+	return n >> 2;
+}

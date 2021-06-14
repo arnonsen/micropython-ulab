@@ -8,6 +8,7 @@
 	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ulab_tools.c" />
 	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy\numpy_tools.c" />
 	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ndarray.c" />
+	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ndscalar.c" />
 	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/approx/approx.c" />
 	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\numpy/compare/compare.c" />
 	<PyUsrModSource Include="$(PyBaseDir)usrmod\ulab\code\ulab_create.c" />

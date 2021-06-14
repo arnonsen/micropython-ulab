@@ -53,6 +53,10 @@
 // This methos adds cycles for the conversion to/from temp_buffer but greatly reduces code size
 #define NUMPY_OPERATORS_USE_TEMPORARY_BUFFER          (1)
 
+// This provides better competability with formal Numpy, where a single element taken from an ndarray keeps the type of the ndarray.
+#define NUMPY_HAS_DTYPE_SCALAR			          (1)
+
+
 // By setting this constant to 1, iteration over array dimensions will be implemented
 // as a function (ndarray_rewind_array), instead of writing out the loops in macros
 // This reduces firmware size at the expense of speed
@@ -243,7 +247,7 @@
 // pointer in iterations. Setting ULAB_VECTORISE_USES_FUNCPOINTER to 1 saves
 // around 800 bytes in the four-dimensional case, and around 200 in two dimensions.
 #ifndef ULAB_VECTORISE_USES_FUN_POINTER
-#define ULAB_VECTORISE_USES_FUN_POINTER (0)
+#define ULAB_VECTORISE_USES_FUN_POINTER (1)
 #endif
 
 // determines, whether e is defined in ulab.numpy itself

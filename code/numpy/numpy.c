@@ -100,15 +100,31 @@ static const mp_rom_map_elem_t ulab_numpy_globals_table[] = {
         { MP_ROM_QSTR(MP_QSTR_pi), ulab_const_float_pi },
     #endif
     // class constants, always included
+    
+    
+    #if NUMPY_HAS_DTYPE_SCALAR
+    { MP_OBJ_NEW_QSTR(MP_QSTR_bool), (mp_obj_t)&ndscalar_bool_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_int8), (mp_obj_t)&ndscalar_int8_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_uint8), (mp_obj_t)&ndscalar_uint8_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_int16), (mp_obj_t)&ndscalar_int16_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_uint16), (mp_obj_t)&ndscalar_uint16_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_int32), (mp_obj_t)&ndscalar_int32_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_uint32), (mp_obj_t)&ndscalar_uint32_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_int64), (mp_obj_t)&ndscalar_int64_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_float), (mp_obj_t)&ndscalar_float_obj },
+#else
     { MP_ROM_QSTR(MP_QSTR_bool), MP_ROM_INT(NDARRAY_BOOL) },
     { MP_ROM_QSTR(MP_QSTR_uint8), MP_ROM_INT(NDARRAY_UINT8) },
     { MP_ROM_QSTR(MP_QSTR_int8), MP_ROM_INT(NDARRAY_INT8) },
     { MP_ROM_QSTR(MP_QSTR_uint16), MP_ROM_INT(NDARRAY_UINT16) },
     { MP_ROM_QSTR(MP_QSTR_int16), MP_ROM_INT(NDARRAY_INT16) },
-	{ MP_ROM_QSTR(MP_QSTR_uint32), MP_ROM_INT(NDARRAY_UINT32) },
-	{ MP_ROM_QSTR(MP_QSTR_int32), MP_ROM_INT(NDARRAY_INT32) },
-	{ MP_ROM_QSTR(MP_QSTR_int64), MP_ROM_INT(NDARRAY_INT64) },
-	{ MP_ROM_QSTR(MP_QSTR_float), MP_ROM_INT(NDARRAY_FLOAT) },
+    { MP_ROM_QSTR(MP_QSTR_uint32), MP_ROM_INT(NDARRAY_UINT32) },
+    { MP_ROM_QSTR(MP_QSTR_int32), MP_ROM_INT(NDARRAY_INT32) },
+    { MP_ROM_QSTR(MP_QSTR_int64), MP_ROM_INT(NDARRAY_INT64) },
+    { MP_ROM_QSTR(MP_QSTR_float), MP_ROM_INT(NDARRAY_FLOAT) },
+#endif
+
+
     // modules of numpy
     #if ULAB_NUMPY_HAS_FFT_MODULE
         { MP_ROM_QSTR(MP_QSTR_fft), MP_ROM_PTR(&ulab_fft_module) },

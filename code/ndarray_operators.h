@@ -32,7 +32,7 @@ enum
 	};
 #endif
 
-mp_obj_t ndarray_multiple_binary_operators(ndarray_obj_t *, ndarray_obj_t *, uint8_t, size_t *, int32_t *, int32_t *, mp_binary_op_t );
+mp_obj_t ndarray_operators_prepare(ndarray_obj_t *, ndarray_obj_t *, uint8_t, size_t *, int32_t *, int32_t *, mp_binary_op_t );
 mp_obj_t ndarray_binary_equality(ndarray_obj_t *, ndarray_obj_t *, uint8_t , size_t *,  int32_t *, int32_t *, mp_binary_op_t );
 mp_obj_t ndarray_binary_add(ndarray_obj_t *, ndarray_obj_t *, uint8_t , size_t *, int32_t *, int32_t *);
 mp_obj_t ndarray_binary_multiply(ndarray_obj_t *, ndarray_obj_t *, uint8_t , size_t *, int32_t *, int32_t *);

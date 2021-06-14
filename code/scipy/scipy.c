@@ -19,7 +19,6 @@
 #include "optimize/optimize.h"
 #include "signal/signal.h"
 #include "special/special.h"
-#include "linalg/linalg.h"
 
 #if ULAB_HAS_SCIPY
 
